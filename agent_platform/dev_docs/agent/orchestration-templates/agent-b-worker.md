@@ -16,8 +16,11 @@ subagent_power: 最多一级（模块级子 worker；清单：<…>）
 ## 任务与边界（从 Ticket 读取，不复制需求）
 
 - **Ticket**：`<ticket_path>`（status、blocked_by、input/output artifacts、Acceptance、verification）；
-- **读取链**：`AGENTS.md`（完成边界）→ `DAG.md`（本票边与并行窗口）→ `PRODUCT.md` / `ARCHITECTURE.md`
-  （边界/不变量）→ 相关 `interfaces/*` → 产品代码基线（**上游票冻结形状为最大参照，零修改**）；
+- **读取链**：`AGENTS.md`（完成边界 + 读法规则）→ **人类审阅层**（按 A 派发要求：P0-06 复核稿
+  `dev_docs/design/human-framework-role-review.md` 对本票影响；产品意图/范围争议查 `dev_docs/product/用户需求原文.md`
+  ——AGENTS 规则：只在复核产品意图或范围争议时读；对话历史 `dev_docs/product/README.md` 只作来源）→
+  `DAG.md`（本票边与并行窗口）→ `PRODUCT.md` / `ARCHITECTURE.md`（边界/不变量）→ 相关 `interfaces/*`
+  → 产品代码基线（**上游票冻结形状为最大参照，零修改**）；
 - **共享基线**：A 已冻结的契约/接口/共享 fixture/套件/骨架（**冻结签名不得改动**；
   本票新增契约以本文件/套件为准）。
 

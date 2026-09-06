@@ -26,20 +26,35 @@ subagent_power: unrestricted dispatch (implementations always go to B; analysis 
 ### 0.2 读取顺序（先总后分、先约束后细节）
 
 1. 入口：`AGENTS.md`——两种 Agent 入口（Development Ticket 构建本产品 / Runtime Task 运行用户工作）、
-   完成边界（**Ticket 状态由开发流程依据 Evidence 更新，实施者与 A 都不改**）、启动顺序五步。
-2. 本票：`tickets/NN-….md`——先读 yaml 元数据（status/blocked_by/input/output artifacts/
+   完成边界（**Ticket 状态由开发流程依据 Evidence 更新，实施者与 A 都不改**）、启动顺序五步；
+   **Context pointers 的读法规则**：需求原文只在复核产品意图/范围争议时读；对话历史只是来源；
+   P0-06 未结束时实现/修订 P1 先核对复核稿对本票的影响。
+2. **人类审阅与需求/功能层（先了解"人审过什么、功能要什么"，再进票据细节）**：
+   - **P0-06 当前产品/架构复核** `dev_docs/design/human-framework-role-review.md`：实现/修订 P1 前
+     必须先核对（AGENTS 明示）——本票是否触及复核结论、被哪些结论约束（如"只读展示不新增模块"、
+     "角色划分与实现机制分开"）；涉及 Context 生命周期再看
+     `dev_docs/design/context-lifecycle-human-review.md`；
+   - **用户需求原文** `dev_docs/product/用户需求原文.md`：**只在复核产品意图或处理范围争议时读**
+     （AGENTS 规则），不当作逐字施工图；
+   - **对话来源索引** `dev_docs/product/README.md`（+ `conversations/`）：追溯方案推导/核对历史建议时
+     选读；**历史回答只作为来源**，当前真相以正式文档+产品代码为准；
+   - **产品定义** `dev_docs/product/产品定义.md` 与 `CONTEXT.md`（领域词义）；涉及需求/架构取舍再读
+     `dev_docs/decisions/INDEX.md`（决策理由）与 `dev_docs/evaluation/mvp-scenario.md`（Gate 步骤）；
+   - **09-06 授权边界** `dev_docs/verification/2026-09-06-context-orchestration-sync.md`：本轮文档同步
+     授权过什么、哪些"复核后无行为修改"、增量票据归属（G2 加 16、09/10 消费 16 等）——派发前以此框定范围。
+3. 本票：`tickets/NN-….md`——先读 yaml 元数据（status/blocked_by/input/output artifacts/
    contracts_to_create/interfaces_to_freeze/verification），再读 What it delivers 与 **Acceptance 段**
    （逐条编号；区分"原验收"与"09-06 扩展验收"——扩展段以
    `dev_docs/verification/2026-09-06-context-orchestration-sync.md` 的授权范围为界）。
-3. 图与边界：`DAG.md`（本票边、并行窗口、Gate 定义、interfaces_to_freeze 规则）→
+4. 图与边界：`DAG.md`（本票边、并行窗口、Gate 定义、interfaces_to_freeze 规则）→
    `PRODUCT.md`（MVP 必须证明/非目标/成功标准）→ `ARCHITECTURE.md`
    （Plane 图、Module Registry、三类 DAG、**全局不变量**——读不变量时逐条对照本票是否触及）。
-4. 语义：相关 `interfaces/*.md`（先读 Purpose/Interface/**Invariants**/Test seam/Explicitly not
+5. 语义：相关 `interfaces/*.md`（先读 Purpose/Interface/**Invariants**/Test seam/Explicitly not
    responsible；**extension records 按票追加**——旧记录不追溯改写，读"当前语义"看最新一条 extension record）。
-5. 模块：`dev_docs/modules/**`（职责/依赖/测试面；只读与当前角色相关的那一节）。
-6. 产品基线：`src/contracts/**`（上游票冻结形状=最大参照）→ 双适配器实现 → 双 harness →
+6. 模块：`dev_docs/modules/**`（职责/依赖/测试面；只读与当前角色相关的那一节）。
+7. 产品基线：`src/contracts/**`（上游票冻结形状=最大参照）→ 双适配器实现 → 双 harness →
    既有契约套件/restart 探针（先读上一票的，再读下下票要消费的）。
-7. 历史与证据：`IMPLEMENTATION-HANDOFF.md` **顶部 = 当前票**（yaml：status/shared_baseline/
+8. 历史与证据：`IMPLEMENTATION-HANDOFF.md` **顶部 = 当前票**（yaml：status/shared_baseline/
    parallel_scope/merge_surface_note + 「契约与存储语义（冻结）」「已冻结的代码入口」「三路并行」
    「integrator 裁决」）；其下各段为**历史保留**（原文不改）；`verification/p1-*-implementation-evidence.md`
    只证明**当时**状态；本票相关旧记录若有出入，以"最新正式文档 + 产品代码"为准并登记分歧。

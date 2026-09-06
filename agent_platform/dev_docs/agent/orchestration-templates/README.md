@@ -16,7 +16,13 @@
 
 - 模板目录：本目录（先读本 README + 三个模板）。
 - 文档根：`/mnt/d/1.project/software/agent_learn/agent_dev/agent_platform`
-  - 入口与完成边界：`AGENTS.md`；产品边界：`PRODUCT.md`；架构与不变量：`ARCHITECTURE.md`；
+  - 入口与完成边界：`AGENTS.md`（含 Context pointers 读法规则——人类审阅层的三条）；
+  - **人类审阅层（先理解需求/功能，再进票据）**：P0-06 当前产品/架构复核 `dev_docs/design/human-framework-role-review.md`
+  （实现/修订 P1 前必核）、相关 design 审阅 `dev_docs/design/`；产品意图/范围争议 `dev_docs/product/用户需求原文.md`；
+  对话来源索引 `dev_docs/product/README.md`（+ `conversations/`，历史回答只作来源）；产品定义 `dev_docs/product/产品定义.md`；
+  决策理由 `dev_docs/decisions/INDEX.md`；Gate 场景 `dev_docs/evaluation/mvp-scenario.md`；
+  **09-06 授权边界** `dev_docs/verification/2026-09-06-context-orchestration-sync.md`；
+  - 产品边界：`PRODUCT.md`；领域词义：`CONTEXT.md`；架构与不变量：`ARCHITECTURE.md`；
   - 开发图：`dev_docs/planning/proposed/P1-foundation/DAG.md`（ticket 边、并行窗口、Gate 定义）；
   - 票据：`dev_docs/planning/proposed/P1-foundation/tickets/`（status 由流程依证据更新，实施者不改）；
   - 接口/模块语义：`dev_docs/interfaces/`、`dev_docs/modules/`；
