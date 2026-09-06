@@ -107,3 +107,36 @@ cursor 落后、刚好追上、追上后不存在、ready、重复 Event、从�
 [`ReadModelIndex.Interface`](../modules/data/read-model-index.md#interface) 中与当前角色直接相关的一节。
 只有实现 cursor/event 适配时再读取 [Command/Event Interface](command-event.md)与
 [StateLedger Interface](state-ledger.md)。
+## P1-04 extension record：task-detail 验证视图
+
+2026-09-05 [P1-04](../planning/proposed/P1-foundation/tickets/04-evidence-satisfies-task.md) 版本化扩展（Plan Graph / Task Detail 形状不变——**绝不把报告文字投影为正式完成状态**）：
+
+- ReadModelIndex 增加 taskVerification 查询（契约见 src/contracts/verification-view.ts）：key=(projectId, goalId, taskId)；只从 EvidenceAdmitted/TaskReductionUpdated 事件重建；每条 EvidenceBindingView 的 applicability 由纯函数按视图“当前锚”（=最新 TaskReduction.currentAnchor；无归约前为 null 且 applicability=null）派生；freshness 复用 opaque CommitCursor（not_ready≠not_found）；投影停滞（已知 v1 事件无 handler）仍整页停止（unsupported_event_type），不静默跳过；
+- 契约测试：tests/contract-suite/{evidence,verification}.contract.suite.ts + tests/read-model|sqlite-read-model/p1-04-verification-projection（InMemory + SQLite 共用同套件）。
+## P1-02 extension record：Plan Graph / Task Detail 与 active plan
+
+2026-09-05 [P1-02](../planning/proposed/P1-foundation/tickets/02-plan-revision-visible.md) 版本化扩展：
+
+- GoalView.activePlanRevision 由固定 null 扩展为 PlanRevisionRef | null（GoalCreated@1 仍投影 null；PlanRevisionAccepted 事件刷新该行与 sourceCursor）；
+- ReadModelIndex 增加 planGraph / taskDetail 查询（契约见 src/contracts/plan-view.ts）；freshness 复用 opaque CommitCursor 语义：not_ready != not_found；查询键为全键 (projectId, goalId[, taskId])；
+- ProjectionStallReason 增加 unsupported_event_type：已知 v1 事件类型但无投影 handler 时整页停止，绝不部分应用或静默跳过；
+- 契约测试：tests/contract-suite/plan.contract.suite.ts（InMemory + SQLite 共用同套件）。
+## P1-05 extension record：goal phase status / timeline 视图
+
+2026-09-05 [P1-05](../planning/proposed/P1-foundation/tickets/05-goal-phase-reduction.md) 版本化扩展（GoalView 形状不变）：
+
+- ReadModelIndex 增加 goalStatus 与 goalTimeline 查询（契约见 src/contracts/goal-phase-view.ts）：key=(projectId, goalId)；只从 GoalPhaseUpdated 事件重建（ready 分支的视图字段名是 `goal`，不是 `status`）；goalTimeline 按事件顺序追加；freshness 复用 opaque CommitCursor（not_ready≠not_found；无 atLeastCursor 且无行 → not_ready）；
+- **ModuleProgress/StageProgress 只作为投影展示，绝不作为 Goal reducer 输入**（防投影回环——Goal phase 只从 canonical 事实归约）；
+- 契约测试：tests/contract-suite/goal-phase.contract.suite.ts（InMemory + SQLite 共用同套件）+ tests/read-model|sqlite-read-model/p1-05-goal-phase-projection。
+
+## P1-03 extension record：ActiveAgent / TaskDetail run 视图
+
+2026-09-05 [P1-03](../planning/proposed/P1-foundation/tickets/03-fake-run-visible.md) 版本化扩展（GoalView 形状不变）：ReadModelIndex 增加 activeAgent（key=projectId+goalId+taskId）与 TaskDetailView.run（TaskRunState）查询，均只从 TaskClaimed / RunStarted / RunEventRecorded / RunOutcomeUnknown 事件重建；freshness 复用 opaque CommitCursor（not_ready≠not_found）。契约见 src/contracts/active-agent.ts。
+
+## P1-06 extension record：handoff provenance 视图
+
+2026-09-06 [P1-06](../planning/proposed/P1-foundation/tickets/06-handoff-a-to-b.md) 版本化扩展：ReadModelIndex 增加 handoffProvenance（key=projectId+goalId+taskId；packet_recorded / replacement_claimed / evidence_admitted 有序时间线，outcomeUnknownPreserved 标记）。契约见 src/contracts/handoff-view.ts。
+
+## P1-07 extension record：lease / conflict / patch 视图
+
+2026-09-06 [P1-07](../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展：ReadModelIndex 增加 writerLease（key=projectId+workspaceId）、integrationConflicts（key=projectId+goalId+taskId；conflictKey 首记录权威、迟到 duplicate 标记、escalation 标记）、workspacePatches（key=projectId+workspaceId）三视图，只展示不判定。契约见 src/contracts/workspace-views.ts。

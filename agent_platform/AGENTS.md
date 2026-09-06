@@ -2,7 +2,7 @@
 
 ```yaml
 status: draft
-updated: 2026-09-05
+updated: 2026-09-06
 scope: 仓库内工作 Agent 的入口与 Context 路由
 ```
 
@@ -11,7 +11,7 @@ scope: 仓库内工作 Agent 的入口与 Context 路由
 ## 两种 Agent 入口
 
 - **构建本产品的开发子 Agent**：入口是本文件；编排者必须在任务消息中给出 `ticket_id`、`ticket_path`、角色、Workspace 根目录，以及上游 Artifact refs。详细需求、输出和验收只从 Ticket 读取，不在派发消息里复制。
-- **产品运行后管理用户工作的 Worker**：入口是版本化 `TaskEnvelope`，拟由 P1-03 的 `DispatchEngine → ContextCompiler → WorkerRuntime.start` 建立。它现在只是 proposed contract，不是已实现入口。
+- **产品运行后管理用户工作的 Worker**：入口是版本化 `TaskEnvelope`；P1-03 已有最小派发契约与 Fake Run 实现证据。完整角色编排、Context 连续性与真实内核接续仍须相关后续票验证。
 
 两者不能混用：Development Ticket 用来构建 Agent Platform；Runtime Task 是 Agent Platform 将来调度的用户工作。
 
@@ -48,6 +48,7 @@ write_scope:
 - 只有复核产品意图或处理范围争议时，读取 [用户需求原文](dev_docs/product/用户需求原文.md)；
 - 追溯方案推导或核对历史建议时，从 [双方对话来源索引](dev_docs/product/README.md) 选择相关对话，历史回答只作为来源；
 - P0-06 未结束时，修订或准备实现 P1 先核对 [当前产品／架构复核](dev_docs/design/human-framework-role-review.md) 对本票的影响；
+- 实现 Context 持续、暂停恢复、换手、历史继承时读取 [生命周期契约](dev_docs/interfaces/context-lifecycle.md)；跨包协调与变更上报读取 [运行时协作](dev_docs/interfaces/runtime-collaboration.md) 和 [人类交互](dev_docs/interfaces/human-design-status.md)；
 - 历史推导只有当前 Ticket 明确引用时才读取 [Archive](dev_docs/archive/INDEX.md)。
 
 ## 完成边界

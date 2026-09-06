@@ -176,3 +176,36 @@ EventPage fixture，不再维护另一种 EventBatch。fixture 必须包含两�
 - `EventPage.events` 承载版本化 `DomainEvent` 联合（GoalCreated | ProjectBootstrapped | WorkspaceBootstrapped），`PositionedEvent.event` 同步扩展；
 - `CommitCursor` 保持 opaque：其具象编码（单调十进制序列）只允许 ledger Adapter 与 ReadModelIndex 经 `compareCommitCursor` 使用；其它调用者不得比较或解码；
 - 对应可执行契约见产品代码（`src/contracts/ledger.ts`、`src/contracts/bootstrap.ts`）与 `tests/contract-suite/state-ledger.contract.suite.ts`（产品代码根：`/home/han001/projects/agents/agent_platform`）。
+## P1-04 extension record：evidence / verification-result 切片
+
+2026-09-05 [P1-04](../planning/proposed/P1-foundation/tickets/04-evidence-satisfies-task.md) 版本化扩展（既有 v1 语义不变）：
+
+- LedgerCommit += evidence-intake（events=[EvidenceAdmitted]，snapshots=[EvidenceSnapshot, TaskEvidenceIndexSnapshot]，CAS=[Evidence@0, TaskEvidenceIndex@(count-1)]，完整幂等）与 verification-result（events=[TaskReductionUpdated]，snapshots=[TaskReductionSnapshot]，CAS=[TaskReduction@(k-1)]，完整幂等）；outboxIntents=[]；
+- AggregateRef/AggregateSnapshot += Evidence / TaskEvidenceIndex / TaskReduction；EvidenceSnapshot 不可变（revision 恒 1）；TaskEvidenceIndex.revision==evidenceIds.length（admission 序；上限 MAX_EVIDENCE_PER_TASK=512，超出零写入拒绝）；TaskReductionSnapshot 记录归约 phase（verifying|failed|blocked|satisfied）+ effective/blocking/stale/outOfScope evidence ids + currentAnchor；
+- Evidence 与绑定锚（EffectivityAnchorV1）同事务可见；applicability（APPLICABLE/STALE/OUT_OF_SCOPE）是纯函数派生量，永不写回；冻结语义与可执行契约见产品代码根 IMPLEMENTATION-HANDOFF.md（P1-04 契约与存储语义）与 src/contracts/{evidence,reduction,ledger,ledger-validation}.ts。
+## P1-02 extension record：install / activate / PlanRevision 切片
+
+2026-09-05 [P1-02](../planning/proposed/P1-foundation/tickets/02-plan-revision-visible.md) 版本化扩展（上文 v1 bootstrap/CreateGoal 语义不变）：
+
+- LedgerCommit += governance-install | governance-activate | plan-revision（project-scoped CommandIdentity、outboxIntents=[]）；
+- AggregateRef/AggregateSnapshot += CompletionPolicyRevision / ArchitectureBaselineRevision / ProjectCompletionPolicyActive / ProjectArchitectureBaselineActive / PlanRevision；GoalSnapshot.activePlanRevision 可非空（v1 创建仍 null/1）；
+- 冻结语义清单与可执行契约见产品代码根 IMPLEMENTATION-HANDOFF.md（P1-02 契约与存储语义）与 src/contracts/**；本文件不复制可执行 schema。
+## P1-05 extension record：goal-reduction commit kind
+
+2026-09-05 [P1-05](../planning/proposed/P1-foundation/tickets/05-goal-phase-reduction.md) 版本化扩展（既有 v1 语义不变）：
+
+- LedgerCommit += goal-reduction（events=[GoalPhaseUpdated]，snapshots=[GoalPhaseSnapshot]，CAS=[GoalPhase@(revision-1)]，**完整幂等**；outboxIntents=[]）；
+- AggregateRef/AggregateSnapshot += GoalPhase（ref=(projectId, goalId)——全键隔离，与 TaskReduction 对称）；GoalPhaseSnapshot 记录 phase（§9 封闭 10 值）+ reasonCodes + explanation（确定性模板）+ sideEffectReconciliation + previousPhase + planRef + reducedAt；单事务，重启等价（tests/restart/p1-05-*）；
+- 冻结语义清单与可执行契约见产品代码根 IMPLEMENTATION-HANDOFF.md（P1-05 契约与存储语义）与 src/contracts/{goal-phase,ledger,ledger-validation}.ts；本文件不复制可执行 schema。
+
+## P1-03 extension record：dispatch / run 持久化
+
+2026-09-05 [P1-03](../planning/proposed/P1-foundation/tickets/03-fake-run-visible.md) 版本化扩展（既有 v1 语义不变）：新增 dispatch-claim / dispatch-start / run-fact 三个 commitKind 与 TaskLease / TaskAttempt / Run / DispatchOutboxEntry 聚合（ref=projectId+goalId+taskId+attemptId，同一原子提交、CAS、可 load、可重启读取；outbox status pending→started→done 各自 CAS 推进）。可执行契约见 src/contracts/{dispatch,ledger,ledger-validation}.ts。
+
+## P1-06 extension record：handoff 持久化
+
+2026-09-06 [P1-06](../planning/proposed/P1-foundation/tickets/06-handoff-a-to-b.md) 版本化扩展：新增 handoff-record / replacement-claim 两个 commitKind 与 HandoffPacket / ReplacementAttempt / HandoffProvenance 聚合；packet 有界（64KiB）且无完整 transcript。可执行契约见 src/contracts/{handoff,handoff-view,handoff-control}.ts。
+
+## P1-07 extension record：lease / integration / patch 持久化
+
+2026-09-06 [P1-07](../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展：新增六个 commitKind 与 WorkspaceReadLease / WorkspaceWriteLease / WorkspaceWriteLeaseIndex / IntegrationResult / PatchRecord 聚合；Workspace 聚合 revision 由 ledger CAS 单调推进，patch 登记在同一原子 commit 内携带 N→N+1 推进（显式 release 不推进）。可执行契约见 src/contracts/{workspace-lease,integration,patch,ledger,ledger-validation}.ts。

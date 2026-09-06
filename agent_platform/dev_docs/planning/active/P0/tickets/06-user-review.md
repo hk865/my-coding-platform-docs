@@ -49,3 +49,9 @@ gate: user-decision
 - 用户确认 P1 的 ticket 顺序和 MVP 场景可用于开始实现；
 - 若有修改，受影响 ticket/DAG 先产生新 revision，再关闭本票；
 - 只有明确 `accept` 后，本票和 P0 才能标为 `completed`，P1 才可转为 `active`。
+
+## 2026-09-06 专项确认与同步
+
+用户认可 Context 生命周期、执行记忆及编排交互方向，并明确要求“开始修改文档”。本轮专项确认不等于整套 P0／P1 accept，也不授权新增实现。本票继续 in_review。
+
+专项 Acceptance：正式规范、P1-16／17、相关消费者及 G2／G3 场景覆盖持续 Context、跨任务记录继承、多个包工头的冲突、秘书／参谋上报架构／接口变化、决定返回受影响工作；P1-03／06 原证据与新增义务分开。同步结果见 [影响记录](../../../../verification/2026-09-06-context-orchestration-sync.md)。

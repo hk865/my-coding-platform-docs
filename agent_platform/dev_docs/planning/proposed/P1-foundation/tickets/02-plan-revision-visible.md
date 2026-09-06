@@ -97,23 +97,34 @@ verification:
 - [StateLedger](../../../../modules/data/state-ledger.md) 保存 immutable governance revision，并原子提交 active-ref/PlanRevision 事件与状态；
 - [ReadModelIndex](../../../../modules/data/read-model-index.md) 投影 Plan/Task View；
 - [Completion Policy Interface](../../../../interfaces/completion-policy.md) 定义 Plan 激活前的 active required GoalGateTask、required Task、obligation 与 verification requirement 非空 guard；
-- 本票创建 CompletionPolicy/ArchitectureBaseline fixture、install/activation，以及 Plan command、event、snapshot、validation error 与 View contracts。
-
-## Acceptance
-
-本轮扩展依据：[运行时协作 Interface](../../../../interfaces/runtime-collaboration.md)。本票仍使用版本化 Plan fixture，不在 P1-03 前引入模型运行依赖；正式协调请求／结果由后续消费者展开。测试重复提交与过期提案不会重复或错误激活 Plan。
-
-- 两个 local fixture 都具有显式 schema version、revision、source identity 与 content digest；fixture 缺失或无效时拒绝安装，不使用内置内容；
-- install contract 持久化 digest/revision 精确匹配的 immutable CompletionPolicy 与 ArchitectureBaseline；同一 identity/revision 不可覆写，重启后内容与 ref 仍可解析；
-- activation contract 只接受已安装的精确 target ref，并以 expected Project revision 做 CAS；悬空、digest mismatch 或竞争更新失败时不移动 active ref；
-- CompletionPolicy 与 ArchitectureBaseline active ref 按 kind 独立存在；P1-02 不要求或创建 ArchitectureEvolutionPolicy active ref；
-- 两个 Project active refs 建立后，一个满足全部非空 guard 的 PlanRevision 被原子接受并成为 Goal 的 active revision；
-- PlanRevision 只接受能从 canonical Project active refs 解析到 identity/revision/digest 完整匹配的 effective CompletionPolicy 与 ArchitectureBaseline，并把精确 refs 固定为不可变 pin；
-- Project 默认 ref 后续移动不改变既有 Plan pin；改变 pin 只能创建新 PlanRevision/PlanRebase；
-- 缺失、悬空、内容不匹配或在 CAS 窗口变化的 active ref 使整个 PlanRevision 零写入拒绝，不使用内置 fallback；
-- 每个可激活 PlanRevision 至少包含一个 required executable Task、一个 active required GoalGateTask 和一个 required AcceptanceObligation；每个 required executable Task 映射非空 required obligation，每个 required obligation 编译出非空 required verification requirements；
-- `parent_of` 只进入 TaskHierarchy，`depends_on` 只进入 RuntimeExecutionDAG，Stage 不自动生成依赖；
-- 空 required 集合、缺少 active required GoalGateTask、悬空边和环被拒绝且无部分写入；
-- 重复 command 保持幂等，旧 expected revision 被 CAS 拒绝；
-- 重启重放后 Plan Graph、Task Detail 与 active revision 一致；
 - 不产生 dispatch outbox、TaskAttempt 或 AgentRun。
+
+## P1-02 implementation record（2026-09-05，有限授权；status 保持 proposed）
+
+```yaml
+status: proposed           # 阶段守卫：P0-06 in_review、P1 DAG proposed；本记录不改变状态
+authorized_by: user        # 有限授权：仅 P1-02（票据级），不代表 P0/P1 验收通过；不自动推进 P1-03
+implementation: verified (limited authorization — acceptance evidence appended 2026-09-05)
+product_root: /home/han001/projects/agents/agent_platform
+handoff: <product root> IMPLEMENTATION-HANDOFF.md（P1-02 契约与存储语义=冻结语义清单）
+evidence: dev_docs/verification/p1-02-implementation-evidence.md（P1-02 only；14 项 Acceptance 逐项对照 + 283 tests PASS + 重启证据块）
+```
+
+### P0-06 复核影响核对（按 AGENTS.md）
+
+- human-framework-role-review.md：初始 Baseline fixture 只验证安装机制、不证明人参与架构生成；角色完成权不与名称绑定；View/解释配对契约未冻结。本票仅安装/激活/接受/投影机制，不派发、不判定完成、不创建 ArchitectureEvolutionPolicy——与复核结论一致，无需修订本票角色/输入输出/验收。
+- completion-policy.md 与票据 Acceptance 无冲突（四正交维度、parent_of/depends_on 分离、非空 guard 顺序、无内置 fallback 均一致）。实施以票据 Acceptance 为准；本轮同时以 P1-02 扩展记录同步接口文档（state-ledger / command-event / goal-view / 三个 module）。
+
+### 共享基线（integrator 第一阶段）
+
+- 契约：src/contracts/governance.ts（fixture/revision/pin/install/activate/digest/fingerprint/resolution）、src/contracts/plan.ts（Stage/Runtime Task 四维度/AcceptanceObligation(requirementLevel)/VerificationRequirement/GateTask/TaskHierarchy/RuntimeExecutionDAG/PlanRevisionSnapshot/PlanValidationError）、src/contracts/plan-view.ts（PlanGraphView/TaskDetailView + freshness）；
+- 版本化扩展：LedgerCommit += governance-install|governance-activate|plan-revision（v1 goal-create/bootstrap 语义不变）、AggregateRef/Snapshot += governance/Plan 各 aggregate、GoalSnapshot.activePlanRevision 可非空（v1 创建仍 null/1）、DomainEvent += 5、GoalView.activePlanRevision 可非空、ProjectionStallReason += unsupported_event_type、ControlEngine += install/activate/applyPlan（委托三个独立入口文件）、ReadModelIndex += planGraph/taskDetail；
+- 共享夹具：src/contracts/fixtures/governance-fixtures.ts、plan-fixtures.ts（版本化 fixture + 确定性 build/fold 辅助）；双 Adapter 经 src/contracts/ledger-validation.ts 跑同一套 commit 校验（InMemory + SQLite）；
+- 契约套件：tests/contract-suite/{governance,plan}.contract.suite.ts（参数化，按 Adapter 接线）、tests/contract-suite/p1-02-harness.ts；重启骨架：tests/restart/p1-02-*（skipIf 探针，实现落地后自动启用）。
+
+### 验证记录（2026-09-05，integrator）
+
+- `pnpm typecheck` 0 errors；`pnpm vitest run` **29 files / 283 tests PASS**（既有 158 零回归）；双 Adapter 契约套件（InMemory+SQLite）29×2 PASS；真实 SQLite 集成 4 PASS；重启证据 1 PASS；`validate-docs.mjs` 12/12；
+- 静态证据：Adapter 之外 0 原始 SQL / 0 node:sqlite；既有 state-ledger/goal-view 契约套件零修改；package/lock/tsconfig/vitest 零差异（零新增依赖）；
+- 详见 evidence 文件；票据 status 保持 proposed（阶段守卫），本票完成不等同 P1 完成，不自动推进 P1-03。
+

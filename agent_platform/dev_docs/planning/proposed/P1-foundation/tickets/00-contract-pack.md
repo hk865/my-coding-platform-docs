@@ -69,6 +69,15 @@ verification:
 - 本票 `blocked_by` 的 P0-06 仍为历史记录；本授权仅对本题生效，作为该前置的显式用户覆盖，不构成对 P0-06 的接受；
 - 派发与集成流程记录：开发 DAG 规定 Module Worker 可在单票内围绕已冻结 Interface 并行，并在本票纵向验收路径汇合（见 [决策 0002](../../../../decisions/0002-module-dag-and-tracer-bullet-tickets.md)）。
 
+## Implementation record (2026-09-05)
+
+- 本票实现、验收证据与 Acceptance 逐项对照：[P1-00 implementation evidence](../../../../verification/p1-00-implementation-evidence.md)；
+- 实施交接与契约基线：产品代码根 `/home/han001/projects/agents/agent_platform` 的 `IMPLEMENTATION-HANDOFF.md`；
+- 状态：实现完成并经集成验证（typecheck 0 错、11 files/117 tests 通过、文档校验 12/12）；本票 status 字段仍为 proposed，与 P1 DAG 阶段守卫一致——不把本记录当作 P0/P1 整体验收，P0-06 仍为 in_review；
+- 契约扩展记录已同步至 interfaces（state-ledger / command-event）与 modules（control-engine）的 P1-00 附录；
+- 下一步（P1-01）需另行授权，未自动推进。
+
+
 ## What it delivers
 
 受支持的 bootstrap contract 从显式、版本化 source 构造 `WorkspaceBootstrapFixture`，在空 InMemory Ledger 中原子写入至少两个彼此隔离的 Project/Workspace entry。`WorkspaceBootstrapManifest` 记录规范化 source digest、每个 entry 的 identity/revision 与 bootstrap revision。固定 fixture 让两个 Project 故意复用同一个本地 `workspaceId`；随后在两个范围分别发送复用同一个本地 `goalId` 和 idempotency key 的 `CreateGoalCommand`，经 InMemory harness 产生彼此隔离的 `GoalCreatedEvent`、`GoalSnapshot` 和 `GoalView`，形成最小可执行 tracer bullet。

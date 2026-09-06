@@ -2,7 +2,7 @@
 
 ```yaml
 status: draft
-updated: 2026-09-05
+updated: 2026-09-06
 slice: 创建 Goal → 持久化 → 投影显示
 plane: Data
 ```
@@ -87,3 +87,26 @@ projection storage、catch-up 和 rebuild。后续新增 View 不扩大调用者
 [`StateLedger.events`](./state-ledger.md#interface) 的 Interface 小节。展示集成时只额外装载
 [`HumanCollaboration.Interface`](../interaction/human-collaboration.md#interface)；不装载 Control Implementation、
 完整 Event 历史、总体架构或无关 View 文档。
+## P1-02 extension record：Plan / Task 投影
+
+2026-09-05 [P1-02](../../planning/proposed/P1-foundation/tickets/02-plan-revision-visible.md) 版本化扩展：advance 处理 5 个新 v1 事件（goal 行在 PlanRevisionAccepted 后刷新 activePlanRevision；Plan Graph / Task Detail 行由事件 payload 重建）；planGraph/taskDetail 查询复用 cursor freshness；未实现投影的已知事件整页停止（unsupported_event_type），绝不部分应用。
+
+## P1-03 extension record：dispatch / run 投影
+
+2026-09-05 [P1-03](../../planning/proposed/P1-foundation/tickets/03-fake-run-visible.md) 版本化扩展：advance 处理 4 个新 v1 事件（TaskClaimed / RunStarted / RunEventRecorded / RunOutcomeUnknown），重建 activeAgent 与 TaskDetailView.run；freshness 沿用 opaque cursor；已知事件无 handler 仍整页停止（unsupported_event_type），绝不部分应用。
+## P1-04 extension record：evidence / reduction 投影
+
+2026-09-05 [P1-04](../../planning/proposed/P1-foundation/tickets/04-evidence-satisfies-task.md) 版本化扩展：advance 处理 EvidenceAdmitted / TaskReductionUpdated，task-detail 验证视图（有效集/过期/越界仅展示）；projection stall 规则不变。
+## P1-05 extension record：goal phase 投影
+
+2026-09-06 [P1-05](../../planning/proposed/P1-foundation/tickets/05-goal-phase-reduction.md) 版本化扩展：advance 处理 GoalPhaseUpdated，goalStatus / goalTimeline 查询（key=(projectId, goalId)）；ModuleProgress/StageProgress 只展示，绝不作为 reducer 输入。
+## P1-06 extension record：handoff provenance 投影
+
+2026-09-06 [P1-06](../../planning/proposed/P1-foundation/tickets/06-handoff-a-to-b.md) 版本化扩展：advance 处理 HandoffRecorded / ReplacementClaimed，handoffProvenance 时间线重建（等价/全键隔离/freshness）。
+## P1-07 extension record：lease / conflict / patch 投影
+
+2026-09-06 [P1-07](../../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展：advance 处理 6 个新 v1 事件（WorkspaceReadLeaseGranted/Released、WorkspaceWriteLeaseGranted/Released、IntegrationJoined、PatchRecorded），writerLease / integrationConflicts / workspacePatches 三视图（只展示）；isHandledEventType 与 handler 同 commit（KNOWN 同步）、未知事件仍整页停止；断言前先 advanceProjection。
+
+## Context 生命周期与协作扩展
+
+P1-16／17 投影工作接续和历史来源；P1-15 展示议题、待决与通知／刷新状态。报告文字不变成完成事实。 行为依据：[Context 生命周期](../../interfaces/context-lifecycle.md)、[运行时协作](../../interfaces/runtime-collaboration.md)、[人类交互](../../interfaces/human-design-status.md)。精确 schema 在对应消费者冻结，文档同步不表示已有实现。

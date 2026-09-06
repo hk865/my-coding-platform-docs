@@ -2,7 +2,7 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 kind: tracer-bullet-vertical-slice
 blocked_by:
   - P1-04
@@ -82,3 +82,23 @@ Worker A 在 Context/Run 结束或故障后停止；平台从已提交 State、E
 - A 的过期 lease 和迟到结果不能覆盖 B 的新 Attempt；
 - outcome_unknown 在交接和 View 中保留，不自动重试不可逆动作；
 - B 提交后续结果时，Task verification path 可追溯到 A、B 两个 Run 与同一 Task revision 的合法演进；本票不以 Goal reducer 为验收前置。
+
+---
+
+## Implementation record（P1-06，status 保持 `proposed`，符合阶段守卫）
+
+```yaml
+implemented: 2026-09-06
+limited_authorization: P1-06 only; 不把本票记成 P1 已验收；不自动推进 P1-15/其他票（G2 需 05+06 双验收）
+evidence: dev_docs/verification/p1-06-implementation-evidence.md
+git: product main commit a9070e5（+ f3a6a71 handoff final）；NOT pushed to GitHub origin main（需用户授权）
+lanes: A 090c3b5 / B ee4405c / C ebe844c（隔离 worktree 从共享基线 ca5c65d 派生，全量合并）
+conflict_log: dev_docs/logs/conflict-reports/2026-09-06-p105-p106-merge.md（P1-05 × P1-06，state=closed）
+acceptance: 6/6 满足; verification: forced-context-rollover / run-crash-recovery / stale-packet / late-result-rejection 四组通过（双适配器 25/25 × 2、真实 SQLite 集成 1/1、重启证据 1/1、typecheck 0、全量 76 files/641 tests、validate-docs 12/12、P1-05 专属文件 0 行 diff）
+```
+
+**2026-09-06 DAG 注记（追加，不改原记录）**：按 [P1 DAG](../DAG.md) 09-06 增量，G2（Continuity）= P1-05 + P1-06 + **P1-16**；本票完成 06 侧证据（05 侧已由 P1-05 交付，16 侧为新增后置边界）。
+
+## 2026-09-06 后续扩展归属
+
+[Context 生命周期](../../../../interfaces/context-lifecycle.md) 新增同工作连续性、关键理由留痕及能力声明，交由 [P1-16](./16-context-continuity.md) 进行兼容性核对和实现；完成后历史继承由 [P1-17](./17-completed-work-context.md) 验证。本票原 Acceptance、冻结版本与 Implementation record 保留，不能以原 PASS 证明新增行为，也不回写原票为新要求未通过。后续契约变化显式版本化。

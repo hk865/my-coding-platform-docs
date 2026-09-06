@@ -105,3 +105,37 @@ verification:
 - 不产生隐式 Plan、Task、Run、Todo 或 dispatch side effect；
 - 命令与展示 Adapter 不直接访问 SQLite 表；
 - 没有运行时 Project/Workspace 创建路径。
+## P1-01 authorization & implementation record（2026-09-05）
+
+```yaml
+ticket: P1-01
+authorization: limited authorization for P1-01 only (direct human request, 2026-09-05)
+status: implementation verified (limited authorization, 2026-09-05) — P1-01 only；本记录不构成 P1 验收（Ticket 头部 status 保持 proposed，符合阶段守卫）
+product_root: /home/han001/projects/agents/agent_platform
+integrator_record: IMPLEMENTATION-HANDOFF.md（P1-01 节）
+evidence: dev_docs/verification/p1-01-implementation-evidence.md
+```
+
+### 共享基线（integrator 建立）
+
+- 复用 P1-00 全部契约与套件（`src/contracts/**`、`tests/contract-suite/**`），不重写；P1-00 验收证据：`dev_docs/verification/p1-00-implementation-evidence.md`。
+- 技术决策记录（详见产品根 IMPLEMENTATION-HANDOFF.md “P1-01 契约与存储语义”）：
+  - **SQLite 驱动**：Node 24 内置 `node:sqlite`（DatabaseSync），零运行时依赖；不采用 better-sqlite3。
+  - **单文件库/临时目录策略**：ledger 与 read model 各一个独立 SQLite 文件，置于 harness 临时目录（默认 mkdtemp）。
+  - **重启语义**：`close()` 关闭连接 → 同一文件路径全新实例；无进程内状态延续。
+  - **两条供给路径**：canonical GoalSnapshot 重启后直接从库加载（StateLedger 不 fold Event）；GoalView 由全新 ReadModelIndex 从持久 EventPage 重放重建。
+  - **原子性**：单 SQLite 事务（Event + snapshot + 幂等记录），失败回滚；故障注入 = 事务内 `beforeWrite` 抛错 → 回滚 → commit() reject。
+- 冻结入口：`src/sqlite-ledger/sqlite-ledger.ts`、`src/sqlite-read-model/sqlite-read-model-index.ts`、`src/harness/persistent-harness.ts`、`tests/restart/**`（签名见产品根 HANDOFF）。
+
+### 并行实施（隔离 worktree，互不重叠的写入范围）
+
+| Lane | 职责 | 写范围 |
+| --- | --- | --- |
+| A | SqliteStateLedger Adapter（load/commit/events、两种 commitKind、CAS、幂等、EventPage、单调 cursor、事务回滚） | `src/sqlite-ledger/**`、`tests/sqlite-ledger/**` |
+| B | SqliteReadModelIndex Adapter（advance/goal、cursor 连续性、去重、全键隔离、freshness、StallError、重建等价） | `src/sqlite-read-model/**`、`tests/sqlite-read-model/**` |
+| C | 持久化 harness 与重启证据路径（文件库 harness、双路径 fixture/断言、证据收集、集成骨架） | `src/harness/persistent-harness.ts`、`tests/restart/**` |
+
+### 状态
+
+2026-09-05 已完成并验证（有限授权内）：Acceptance 逐项证据见 `dev_docs/verification/p1-01-implementation-evidence.md`（全量 18 files / 158 tests PASS、两套共享契约套件 InMemory+SQLite 双通过、文档校验 12/12）。**停止：不自动推进 P1-02**；P1-02 需另行授权，P1 尚未验收（DAG 仍 proposed）。
+

@@ -2,9 +2,10 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 kind: tracer-bullet-vertical-slice
 blocked_by:
+  - P1-16
   - P1-08
 architecture_ref: ../../../../../ARCHITECTURE.md
 module_refs:
@@ -29,6 +30,7 @@ contracts_to_create:
   - QueryJobResult
   - QueryJobView
 input_artifacts:
+  - { artifact: versioned-context-continuity-contract, source: upstream, producer: P1-16 }
   - { artifact: status-and-evidence-view, source: upstream, producer: P1-08 }
   - { artifact: immutable-evidence-records, source: upstream, producer: P1-04 }
   - {
@@ -42,11 +44,13 @@ input_artifacts:
       producer: P1-09,
     }
 output_artifacts:
+  - query-followup-provenance
   - bounded-query-context
   - isolated-query-agent-run
   - sourced-query-result
   - query-job-view
 verification:
+  - bounded-query-followup-test
   - source-run-noninterruption-test
   - read-only-capability-test
   - context-size-and-provenance-test
@@ -54,6 +58,8 @@ verification:
 ```
 
 ## Blocked by
+
+- [P1-16](./16-context-continuity.md)：消费 versioned-context-continuity-contract。
 
 2026-09-05 [设计复核](../../../../design/human-framework-role-review.md)：原 QueryJob 聚焦只读问答；秘书／参谋辅助需求确立和架构协商的范围、角色及产物需在复核中明确，不能直接等同本票。
 
@@ -75,6 +81,11 @@ verification:
 - 本票首次冻结 HumanCollaboration query-job、ContextCompiler query-context、WorkerRuntime read-only-query，以及 DispatchEngine snapshot／WorkerRuntime public-snapshot 扩展；后续消费者只能使用该版本或提交显式版本升级。本票同时创建 QueryJob command、context、result 与 View contracts。
 
 ## Acceptance
+
+2026-09-06 扩展依据：[Context 生命周期](../../../../interfaces/context-lifecycle.md)、[运行时协作](../../../../interfaces/runtime-collaboration.md) 与 [人类交互](../../../../interfaces/human-design-status.md)。新增条款尚待本票实施验证。
+
+- 消费 P1-16 的连续性契约：QueryJob 可有多轮有界澄清；相关追问引用此前适用结果，仍不改源 Worker Context／lease／预算。结束、超时、缺口与过期回答可观察。
+
 
 本轮扩展依据：[运行时协作 Interface](../../../../interfaces/runtime-collaboration.md)。本票补充冻结 DispatchEngine.SnapshotPort 与 WorkerRuntime 可选公开快照能力；测试 unsupported／stale 显式返回、仅在请求与授权允许时转 QueryJob。查询角色可由自由模板实例化，仍只读且不影响源 Run。
 

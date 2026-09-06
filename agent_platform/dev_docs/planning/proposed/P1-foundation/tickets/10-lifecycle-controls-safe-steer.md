@@ -2,9 +2,10 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 kind: tracer-bullet-vertical-slice
 blocked_by:
+  - P1-16
   - P1-08
 architecture_ref: ../../../../../ARCHITECTURE.md
 module_refs:
@@ -26,6 +27,7 @@ contracts_to_create:
   - RuntimeControlIntent
   - SafePointAcknowledgement
 input_artifacts:
+  - { artifact: versioned-context-continuity-contract, source: upstream, producer: P1-16 }
   - { artifact: status-and-evidence-view, source: upstream, producer: P1-08 }
   - { artifact: fake-agent-run-events, source: upstream, producer: P1-03 }
   - {
@@ -39,11 +41,13 @@ input_artifacts:
       producer: P1-10,
     }
 output_artifacts:
+  - context-resume-outcome
   - desired-state-events
   - durable-runtime-control-intent
   - safe-point-acknowledgement
   - control-timeline-view
 verification:
+  - resume-original-or-replacement-test
   - lifecycle-transition-table-tests
   - idempotent-control-command-tests
   - safe-point-delivery-test
@@ -51,6 +55,8 @@ verification:
 ```
 
 ## Blocked by
+
+- [P1-16](./16-context-continuity.md)：消费 versioned-context-continuity-contract。
 
 2026-09-05 [设计复核](../../../../design/human-framework-role-review.md)：本票是待复核候选。开工或冻结契约前，按复核表确认本票的角色、输入输出与验收是否需要修订；P0-06 仍未关闭。
 
@@ -70,6 +76,12 @@ verification:
 - 本票首次冻结 HumanCollaboration control-command、DispatchEngine control-intent 与 WorkerRuntime lifecycle-control 三个最小 Interface；P1-11 只消费已确认的控制结果。本票同时创建 lifecycle commands、Runtime control intent 和 safe-point acknowledgement contracts。
 
 ## Acceptance
+
+2026-09-06 扩展依据：[Context 生命周期](../../../../interfaces/context-lifecycle.md)、[运行时协作](../../../../interfaces/runtime-collaboration.md) 与 [人类交互](../../../../interfaces/human-design-status.md)。新增条款尚待本票实施验证。
+
+- 暂停保留工作前沿与待决动作；恢复按内核能力继续原运行或明确用新 Run 接续。不能以命令送达证明原 Context 已恢复。
+- 重复恢复与旧回执保持幂等／版本拒绝；取消正常留痕、故障缺失记录与未知副作用显式保留，消费 P1-16 接续能力。
+
 
 - pause、resume、cancel 和 steer 均要求 expected revision 与 idempotency key；
 - 命令先持久化 desired state/control intent，再触发 Runtime side effect；

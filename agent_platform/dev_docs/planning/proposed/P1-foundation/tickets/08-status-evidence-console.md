@@ -2,7 +2,7 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 kind: tracer-bullet-vertical-slice
 blocked_by:
   - P1-05
@@ -67,6 +67,11 @@ verification:
 
 ## Acceptance
 
+2026-09-06 扩展依据：[Context 生命周期](../../../../interfaces/context-lifecycle.md)、[运行时协作](../../../../interfaces/runtime-collaboration.md) 与 [人类交互](../../../../interfaces/human-design-status.md)。新增条款尚待本票实施验证。
+
+- 已有 Run／Handoff 的持续、转交与未知结果按来源展示，不把暂时等待显示为工作完成。议题和主动变更通知由 P1-14／15 扩展，本票不依赖它们。
+
+
 本轮扩展依据：[运行时协作 Interface](../../../../interfaces/runtime-collaboration.md)。扩展角色／Run／报告引用投影，正式状态与未验证报告分开标记；验证纯事实查询不调用模型，跨 scope 或过期解释不能混入当前事实。
 
 - Portfolio 至少列出 bootstrap manifest 中两个彼此隔离的 Project/Workspace，用户可以选择和切换当前查看范围；
@@ -79,3 +84,14 @@ verification:
 - projection 落后时显示 `not_ready` 或等价 freshness 状态，不回显请求伪装成功；
 - 平台重启后相同事件重建出等价 View；
 - 本票没有隐藏的控制、QueryJob 或 Planner side effect。
+
+## Implementation record (2026-09-06, P1-08)
+
+- **status**: stays `proposed` (per development workflow — ticket status is updated by the process, not by the implementing agent); acceptance documented at `../../verification/p1-08-implementation-evidence.md` (product root commit 7664d91; 97 files / 768 tests PASS; 12/12 acceptance + 7/7 verification groups; validate-docs 13/13).
+- **7 contracts frozen by the first consumer (this ticket)**: PortfolioViewQuery / WorkspaceSummaryView / WorkspaceSelectionRoute / PlanMatrixViewQuery / ActiveAgentsViewQuery / TaskEvidenceViewQuery / TimelineViewQuery — all v1, dual-adapter, opaque-cursor freshness (not_ready != not_found); bounded (timeline 200 / active-agents 100 / matrix 512 / evidence summary 4096B / portfolio 64).
+- **versioned additions only**: HumanCollaboration console query group (6 methods, read-only face — pure ReadModelIndex delegation; no Module added; ARCHITECTURE §Plane) + ReadModelIndex same 6 queries. P1-00…P1-07 frozen shapes zero-diff-verified; **0 new DomainEvents** (KNOWN + isHandledEventType unchanged; all console projections consume existing v1 events).
+- **two parallel lanes merged** (portfolio/summary 10/10, matrix/agents/evidence/timeline 10/10) + integrator rulings: agentRunCount = claims + replacements; replacement run really started via handoffDrive.driveHandoff (P1-06 path) so "ongoing" rows are sourced from real RunStarted facts; maxEntries frozen as positive-cap; report/formal separation via marker (unverified_report / observed_fact) + modelExplanation four-state (P1-08 = unavailable — no model semantic explanation; deterministic reason codes carry sourceCursor).
+- **no hidden control/QueryJob/Planner side effect** (console queries create zero ledger events; TrapControl/TrapStateLedger prove the read-only face); console adapter cannot reach ledger tables (console_* tables exist only in the read-model DB file).
+- **G4 (Human Control) waits P1-09 + P1-11** — the P1-08 side is complete; 09/10 need both the P1-08 and P1-16 products; active notification / change reporting = P1-14/15 (read-only passive display only).
+- **not pushed**: product root local main (7664d91) is NOT pushed to GitHub origin main (push requires user authorization per P1-04/05/06/07 precedent).
+

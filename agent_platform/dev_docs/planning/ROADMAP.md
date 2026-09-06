@@ -2,7 +2,7 @@
 
 ```yaml
 status: current
-updated: 2026-09-05
+updated: 2026-09-06
 scope: 从当前 P0 设计冻结到 P1 foundation MVP 证据链的唯一阶段导航
 active_phase: ./active/P0/DAG.md
 next_proposed_phase: ./proposed/P1-foundation/DAG.md
@@ -38,7 +38,7 @@ evaluation: ../evaluation/mvp-scenario.md
 - 已完成：来源归档、地图重写、Plane→Module 切分、首个 slice contract 和 P1 候选 DAG；
 - 当前门禁：用户审阅 Task→Goal Completion Policy 与本开发地图；
 - 2026-09-05 新增 [角色、统一界面与架构参与复核](../design/human-framework-role-review.md)，相关 Module、Interface、P1-15 集成票及 MVP 门禁现已同步成可审阅草案；运行时 schema 在首个消费者冻结；
-- P0 未授权创建产品代码仓库或开始 P1 实现。
+- 整体阶段批准仍待 P0-06；已发生的建项与逐票有限授权见各票 Implementation record，不据阶段状态否认这些记录。
 
 ## 3. 下一候选阶段
 
@@ -70,3 +70,9 @@ flowchart LR
 4. 第一张票无需依赖尚不存在的生产 Adapter；
 5. MVP 场景能区分 PASS、FAIL、BLOCKED、STALE 与 outcome_unknown；
 6. 没有把目标收益（更快、更省 Token）写成尚未测量的事实。
+
+## 2026-09-06 Context 与编排专项修订
+
+专项方向已确认，用户授权同步文档及 Ticket；P0 仍 in_review，P1 仍 proposed。P1-00…06 已有逐票有限授权记录，其中 03／06 的原证据保留；此处阶段批准与逐票授权分别查阅，不以旧“未开始 P1”快照覆盖已发生工作。
+
+P1 新增 16（同工作 Context 连续性）与 17（完成工作向新任务继承），按 [P1 DAG](proposed/P1-foundation/DAG.md) 的真实依赖穿插实施；G2 增加 16，G3 由 15 整合跨包冲突、人的决定反馈和 17 的继承能力。本次不启动任何实现票。

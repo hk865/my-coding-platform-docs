@@ -2,7 +2,7 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 kind: tracer-bullet-vertical-slice
 blocked_by:
   - P1-10
@@ -41,11 +41,13 @@ input_artifacts:
       producer: user,
     }
 output_artifacts:
+  - affected-context-refresh-results
   - bounded-change-proposal
   - affected-subgraph-analysis
   - authorized-user-decision
   - new-goal-or-plan-revision
 verification:
+  - affected-context-refresh-test
   - affected-subgraph-selection-tests
   - decision-authority-tests
   - revision-cas-tests
@@ -77,6 +79,12 @@ verification:
 - 本票首次冻结 HumanCollaboration goal-change、PlanCompiler plan-proposal 与 ContextCompiler planning-context 三个最小 Interface；后续规划或变更票只能消费这些版本或提交显式版本升级。本票同时创建 amend、proposal/patch、impact、decision 和 revision contracts。
 
 ## Acceptance
+
+2026-09-06 扩展依据：[Context 生命周期](../../../../interfaces/context-lifecycle.md)、[运行时协作](../../../../interfaces/runtime-collaboration.md) 与 [人类交互](../../../../interfaces/human-design-status.md)。新增条款尚待本票实施验证。
+
+- 变更影响分析列出受影响工作 Context、旧假设及待刷新材料；框架登记刷新／重建结果后才继续相关动作，独立工作可继续。
+- 新任务／版本显式引用相关前沿和理由；拒绝／延后不实施提案。架构／接口变更必须上报，用户决定与通知义务分开；完整跨包语义场景由 P1-15 验证。
+
 
 扩展依据：[运行时协作 Interface](../../../../interfaces/runtime-collaboration.md)。本票冻结 PlanCompiler 有界协调的请求／结果契约及 planning-context；测试重复结果、过期来源和无授权提案不改变正式 revision，Context 缺口通过有预算的工作补充，不在编译器内部启动模型。
 

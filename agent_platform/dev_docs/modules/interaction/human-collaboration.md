@@ -2,7 +2,7 @@
 
 ```yaml
 status: draft
-updated: 2026-09-05
+updated: 2026-09-06
 slice: 创建 Goal → 持久化 → 投影显示
 plane: Human Interaction
 ```
@@ -106,3 +106,7 @@ Control 错误到用户错误的映射，以及提交后按 cursor 读取或等�
 [`ControlEngine.Interface`](../control/control-engine.md#interface) 与
 [`ReadModelIndex.Interface`](../data/read-model-index.md#interface) 小节。领域词义有歧义时再读取
 [`CONTEXT.md`](../../../CONTEXT.md) 的相关条目；不默认装载总体架构、完整 DAG 或其他 Ticket。
+
+## Context 生命周期与协作扩展
+
+P1-14／15 消费架构／接口变更通知和待决结果；主动展示、精确决定与反馈见人类交互契约。 行为依据：[Context 生命周期](../../interfaces/context-lifecycle.md)、[运行时协作](../../interfaces/runtime-collaboration.md)、[人类交互](../../interfaces/human-design-status.md)。精确 schema 在对应消费者冻结，文档同步不表示已有实现。

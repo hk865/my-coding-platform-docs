@@ -2,7 +2,7 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 kind: tracer-bullet-vertical-slice
 blocked_by:
   - P1-05
@@ -73,6 +73,11 @@ verification:
 
 ## Acceptance
 
+2026-09-06 扩展依据：[Context 生命周期](../../../../interfaces/context-lifecycle.md)、[运行时协作](../../../../interfaces/runtime-collaboration.md) 与 [人类交互](../../../../interfaces/human-design-status.md)。新增条款尚待本票实施验证。
+
+- 多个工作包的角色 Context 与权限隔离；同一协调者退出不撤销独立 Worker 的合法 lease。跨包冲突的语义路由由 P1-15 集成，本票验证运行隔离。
+
+
 - 两个 Reader 的 Run 时间实际重叠，且各自有独立 Attempt、Context、预算和来源；
 - 同 Stage 或不同 Stage 不产生隐式先后，只有显式 RuntimeExecutionDAG `depends_on` 阻塞；
 - Reader 不能修改目标 Workspace，其输出只作为 Evidence、Artifact 或 Handoff；
@@ -80,3 +85,14 @@ verification:
 - 同一 conflict scope 同时最多一个有效 Writer lease；
 - Writer 使用已接受 Reader 输出，返回 patch/commit、changed paths、检查结果和 Workspace revision；
 - GoalGateTask 的全量检查通过后 Goal 才可完成，失败事实仍可追溯。
+
+## Implementation record (2026-09-06, P1-07)
+
+- **status**: stays `proposed` (per development workflow — ticket status is updated by the process, not by the implementing agent); acceptance documented at `../verification/p1-07-implementation-evidence.md` (product root commit 14886d8; 88 files / 722 tests PASS; 8/8 acceptance + 5/5 verification groups; validate-docs 13/13).
+- **two minimal interfaces frozen by the first consumer**: `DispatchEngine.WorkspaceLeasePort` and `WorkerRuntime.WorkspaceCapabilityPort` (src/contracts/workspace-lease.ts + workspace-capability.ts, v1; contract-suite + dual-adapter wiring as the minimal contract test).
+- **5 contracts created**: WorkspaceReadLease, WorkspaceWriteLease, ConflictScope, IntegrationTaskResult, PatchArtifact (+ 3 view contracts + parallel drive port).
+- **three lanes merged** (lease+capability 26/26, drive+join 9/9, projections+patch+restart 19/19); P1-03/04/05/06 frozen shapes zero-diff-verified; 6 new v1 events + 6 commitKinds in ONE atomic story (KNOWN + isHandledEventType same commit).
+- **integrator rulings during merge**: DAG eligibility live-phase overlay (plan snapshots are immutable); taskRevision numeric validators; run-scoped P1-03 start idempotencyKey; release expectedRevision 1; conflict-test plan variant (a FAILed dep correctly blocks, so the conflict join drops that edge); GoalGate full check = full re-verification at the canonical post-write revision (P1-05 reducer untouched); views are event projections.
+- **G3 (Role Collaboration) waits P1-07 + P1-15 evidence** — the P1-07 side is now complete; semantic routing / human decision remains P1-15.
+- **not pushed**: product root local main (14886d8) is NOT pushed to GitHub origin main (push requires user authorization per P1-04/05/06 precedent).
+

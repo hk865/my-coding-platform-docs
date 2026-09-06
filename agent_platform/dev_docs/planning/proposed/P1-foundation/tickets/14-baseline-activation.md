@@ -2,7 +2,7 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 kind: tracer-bullet-vertical-slice
 blocked_by:
   - P1-12
@@ -26,6 +26,7 @@ contracts_to_create:
   - MigrationGateTask
   - BaselineActivation
 input_artifacts:
+  - { artifact: reported-interface-conflict-finding, source: upstream, producer: P1-12 }
   - { artifact: architecture-decision-brief, source: upstream, producer: P1-12 }
   - { artifact: candidate-baseline-proposal, source: upstream, producer: P1-12 }
   - { artifact: authorized-user-decision, source: upstream, producer: P1-11 }
@@ -45,11 +46,13 @@ input_artifacts:
       producer: P1-02,
     }
 output_artifacts:
+  - architecture-change-notification
   - immutable-candidate-baseline
   - migration-plan-and-gate-evidence
   - cas-guarded-baseline-activation
   - baseline-change-view
 verification:
+  - architecture-notification-idempotency-test
   - candidate-materialization-digest-test
   - stale-source-baseline-rebase-required-test
   - decision-target-matching-tests
@@ -82,6 +85,13 @@ ArchitectureReconciler 先确认 P1-12 candidate proposal 的 source baseline �
 - 本票首次冻结 HumanCollaboration architecture-decision、ArchitectureReconciler baseline-evolution 与 VerificationEngine migration-gate 三个最小 Interface；它们不扩张 P1-12 的 inspection/code-graph 端口，后续消费者只能使用这些版本或显式升级。本票同时创建 architecture decision、candidate baseline、migration 和 activation contracts。
 
 ## Acceptance
+
+2026-09-06 扩展依据：[Context 生命周期](../../../../interfaces/context-lifecycle.md)、[运行时协作](../../../../interfaces/runtime-collaboration.md) 与 [人类交互](../../../../interfaces/human-design-status.md)。新增条款尚待本票实施验证。
+
+- 架构／接口变化的来源、选项、迁移影响和决定状态主动进入人类界面；重复事件不重复通知，拒绝／延后不实施拟议变更。
+- 本票继续使用精确 ArchitectureChangeDecision＋migration Gate＋CAS，不新授予自动激活权限；既有授权内无需重复批准的通知行为在 P1-15 协调策略场景验证。
+- 激活后列出仍固定旧 baseline 的工作及刷新／迁移要求；经 P1-11 显式迁移后才按新版本执行。
+
 
 - candidate baseline 必须从 P1-12 proposal 指定的 source baseline 与规范化内容确定性物化；物化时 Project active baseline 必须等于 proposal source ref，且 source/candidate digest 必须匹配，否则不能请求 Decision 或运行 migration；
 - candidate 先以 immutable revision 持久化，本票再经 P1-11 已验收的 authority path 创建新的 ArchitectureChangeDecision；该 Decision 记录 subject、outcome、actor、authority、authorized target、当前 from ref 与精确 candidate ref；

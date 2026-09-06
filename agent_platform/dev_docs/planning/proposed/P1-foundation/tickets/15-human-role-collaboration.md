@@ -2,9 +2,10 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 kind: tracer-bullet-vertical-slice
 blocked_by:
+  - P1-17
   - P1-06
   - P1-07
   - P1-09
@@ -25,6 +26,10 @@ contracts_to_create:
   - CoordinationPolicy
   - UnifiedStatusPresentation
 input_artifacts:
+  - { artifact: architecture-change-notification, source: upstream, producer: P1-14 }
+  - { artifact: affected-context-refresh-results, source: upstream, producer: P1-11 }
+  - { artifact: reported-interface-conflict-finding, source: upstream, producer: P1-12 }
+  - { artifact: completed-work-context-evidence, source: upstream, producer: P1-17 }
   - { artifact: bounded-handoff-packet, source: upstream, producer: P1-06 }
   - { artifact: exclusive-writer-capability, source: upstream, producer: P1-07 }
   - { artifact: provenance-preserving-evidence-join, source: upstream, producer: P1-07 }
@@ -33,11 +38,17 @@ input_artifacts:
   - { artifact: new-goal-or-plan-revision, source: upstream, producer: P1-11 }
   - { artifact: real-task-and-human-design-choices, source: external_input, producer: user }
 output_artifacts:
+  - cross-work-package-decision-feedback
+  - sourced-architecture-interface-brief
   - human-confirmed-initial-design
   - versioned-coordination-policy
   - autonomous-role-feedback-trace
   - unified-sourced-status-presentation
 verification:
+  - cross-package-conflict-before-test-failure
+  - decision-feedback-context-refresh-test
+  - authorized-change-notification-test
+  - completed-work-semantic-continuation-test
   - initial-design-decision-test
   - bounded-role-rework-loop-test
   - policy-authority-and-budget-test
@@ -46,6 +57,8 @@ verification:
 ```
 
 ## Blocked by
+
+- [P1-17](./17-completed-work-context.md)：消费 completed-work-context-evidence。
 
 依赖上述已验收能力，P0-06 未批准前保持 proposed。P1-11 的规划／决定路径通过 P1-14 成为已具备能力；本票不反过来成为基础票前置。
 
@@ -63,6 +76,15 @@ verification:
 
 ## Acceptance
 
+2026-09-06 扩展依据：[Context 生命周期](../../../../interfaces/context-lifecycle.md)、[运行时协作](../../../../interfaces/runtime-collaboration.md) 与 [人类交互](../../../../interfaces/human-design-status.md)。新增条款尚待本票实施验证。
+
+- 至少两个包工头负责相关工作包，并有指定集成职责；测试尚未失败时发现接口／职责冲突，通过有限交流和调查形成选项。
+- 书记保留各方依据与分歧，秘书／参谋向人上报变化与影响；不要求每条消息串行经过全部角色。
+- 覆盖拒绝、延后、旧版本决定和已接受变化：仅受影响动作等待，决定经规范／baseline／Plan 路径返回全部受影响工作，材料刷新／重建可追溯。
+- 验证已明确授权内的契约变更也主动汇报，可聚合通知且不重复审批；策略本身必须有效，不绕过 P1-14 的 baseline 门禁。
+- 消费 P1-17 完成后继承结果；同一真实场景在工作结束后再开相关新任务，识别旧前提不适用。
+
+
 - 人看到需求歧义、至少两个有实质差别的选项及影响，决定绑定精确 proposal revision；拒绝、延后与旧决定不会激活规范或计划。
 - 初始 Baseline 无 source baseline，不伪造 migration；复用 P1-02 的显式 install/activation，并检查 Project 当前无 active ref；已有基线的变更走 P1-14。多产物提交失败时可恢复，不能展示部分完成为整体成功。
 - 显式安装有限预算的协调策略；既定义务内测试／返工可自动推进，改变需求、验收或 baseline 的未委托变化必须升级；提示／经验不能扩大策略。
@@ -73,4 +95,4 @@ verification:
 
 ## Verification
 
-以可重放协商 fixture 做确定性拒绝／幂等／版本测试，再对用户选定真实任务运行一次模型协作集成，保存四个 output_artifacts。记录预算、人工决策次数与返工原因；fixture 不能替代真实任务集成 PASS。
+以可重放协商 fixture 做确定性拒绝／幂等／版本测试，再对用户选定真实任务运行一次模型协作集成，保存本票声明的全部 output_artifacts。记录预算、人工决策次数与返工原因；fixture 不能替代真实任务集成 PASS。

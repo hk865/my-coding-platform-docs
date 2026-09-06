@@ -11,7 +11,7 @@ source_of_truth: false
 
 ## 双入口
 
-这里的工作 Agent 有两类：构建本产品的开发子 Agent 从根 `AGENTS.md + Development Ticket` 进入；产品运行后的用户任务 Worker 从版本化 `TaskEnvelope + WorkerRuntime.start` 进入。后者由 P1-03 候选票实现，目前不能描述成已有能力。
+这里的工作 Agent 有两类：构建本产品的开发子 Agent 从根 `AGENTS.md + Development Ticket` 进入；产品运行后的用户任务 Worker 从版本化 `TaskEnvelope + WorkerRuntime.start` 进入。后者已有 P1-03 最小契约与 Fake Run 证据；完整 Context 连续性和角色协作尚待后续票验证。
 
 ```mermaid
 flowchart LR
@@ -41,7 +41,7 @@ flowchart LR
 - Worker 默认看不到完整 Roadmap、完整 transcript 和归档；
 - 用户需求原文只在产品边界、目标解释或需求冲突时加载。
 
-## Runtime Worker 入口（P1-03 proposed）
+## Runtime Worker 入口（P1-03 有限授权实现；阶段 proposed）
 
 ```mermaid
 flowchart LR
@@ -54,7 +54,7 @@ flowchart LR
   Facts --> Control["ControlEngine 归约"]
 ```
 
-`TaskEnvelope` 是 Runtime Worker 的唯一任务入口；Dashboard、聊天消息、Todo 和完整 transcript 都不能绕过它直接改写 Worker 义务。本链仍处于 P1-03 proposed，当前仓库只有 contract/ticket，没有运行实现。
+`TaskEnvelope` 是 Runtime Worker 的唯一任务入口；Dashboard、聊天消息、Todo 和完整 transcript 都不能绕过它直接改写 Worker 义务。本链已有 P1-03 最小派发实现证据；完整持续工作、能力降级与真实内核接续由 P1-16 验证。
 
 ## 产品信息流
 
@@ -98,3 +98,25 @@ stateDiagram-v2
 ```
 
 `Handoff` 不是“自行宣布 Ticket 完成”。它把可检查结果交回编排/验收边界；缺少输入时以 Blocked 结束，不自行扩大范围。
+
+## 持续 Context 与跨包决定反馈
+
+该图表达运行时行为，依据为 [生命周期](../interfaces/context-lifecycle.md)、[运行时协作](../interfaces/runtime-collaboration.md) 与 [人类交互](../interfaces/human-design-status.md)，不表示新的源码依赖或固定进程数量。
+
+```mermaid
+flowchart LR
+  Worker[执行者] -->|问题与来源| Foreman[相关包工头与集成职责]
+  Foreman -->|有限澄清与调查请求| Control[确定性控制与派发]
+  Control -->|受理后的工作与反馈| Foreman
+  Foreman -->|架构或接口变化及分歧| Adviser[秘书／参谋]
+  Records[书记：事实整理] -->|来源与分歧简报| Adviser
+  Adviser -->|选项与影响上报| Human[人]
+  Human -->|精确方案决定| Control
+  Control -->|正式规范与计划变更| Refresh[受影响工作材料刷新]
+  Refresh -->|接续依据与理由| Worker
+  Refresh -->|决定与计划反馈| Foreman
+  Worker -->|关键理由与前沿| History[持久工作记录]
+  History -->|当前事实与适用历史| Next[新 Context 或相关新任务]
+```
+
+普通契约内协调经框架继续，新的架构／接口取舍按人类决定路径处理；已有明确授权的变化仍主动汇报。协调者换手不停止独立工作，消息本身不产生阻塞边。开发 Ticket 的原结束图只表示交付流程，不把模型调用结束等同于工作生命周期结束。

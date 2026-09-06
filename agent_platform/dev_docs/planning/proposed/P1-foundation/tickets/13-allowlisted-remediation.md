@@ -2,7 +2,7 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 kind: tracer-bullet-vertical-slice
 blocked_by:
   - P1-12
@@ -92,6 +92,11 @@ verification:
 - 本票创建 ArchitectureEvolutionPolicy fixture/install/activation，以及 remediation patch/task 与 deduplication contracts。
 
 ## Acceptance
+
+2026-09-06 扩展依据：[Context 生命周期](../../../../interfaces/context-lifecycle.md)、[运行时协作](../../../../interfaces/runtime-collaboration.md) 与 [人类交互](../../../../interfaces/human-design-status.md)。新增条款尚待本票实施验证。
+
+- 区分恢复已接受架构的修复与修改架构／接口契约；后者走提案上报及适用决定，不因命中普通修复规则直接扩大授权。
+
 
 - local fixture 具有显式 schema version、revision、source identity 与 content digest；缺失或无效时拒绝安装，不使用内置 allowlist；
 - install contract 持久化 digest/revision 精确匹配的 immutable ArchitectureEvolutionPolicy；同一 identity/revision 不可覆写，重启后仍可解析；

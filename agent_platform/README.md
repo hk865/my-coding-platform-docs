@@ -2,7 +2,7 @@
 
 ```yaml
 status: draft
-updated: 2026-09-05
+updated: 2026-09-06
 scope: 产品入口、文档路由与 Agent Context 规则
 execution_kernel: coding-agent (separate repository)
 ```
@@ -31,6 +31,8 @@ Agent Platform 是建立在 `coding-agent` 执行内核之上的独立产品。�
 | 追溯用户需求原文          | [用户需求原文](dev_docs/product/用户需求原文.md)，仅在范围争议时读取  |
 | 处理当前规划工作          | [P0 DAG](dev_docs/planning/active/P0/DAG.md) + 当前 Ticket            |
 | 查看候选实现顺序          | [P1 Foundation DAG](dev_docs/planning/proposed/P1-foundation/DAG.md)  |
+| Context 持续、恢复与历史继承 | [Context 生命周期](dev_docs/interfaces/context-lifecycle.md) |
+| 跨包协作与变更汇报 | [运行时协作](dev_docs/interfaces/runtime-collaboration.md)、[人类交互](dev_docs/interfaces/human-design-status.md) |
 | 审阅 Task→Goal 完成规则   | [Completion Policy](dev_docs/interfaces/completion-policy.md)         |
 | 查看历史推导              | [Archive Index](dev_docs/archive/INDEX.md)，仅按需加载                |
 
@@ -38,7 +40,7 @@ Agent Platform 是建立在 `coding-agent` 执行内核之上的独立产品。�
 
 - 用户从本 `README.md` 进入产品、架构、状态与审阅视图；
 - 构建本产品的开发子 Agent 从 [AGENTS.md](AGENTS.md) 进入，但真正的工作起点必须是开发编排者明确分配的当前 Development Ticket；
-- 产品运行后的 Worker 将从版本化 `TaskEnvelope` 进入 `WorkerRuntime.start`；这是 [P1-03](dev_docs/planning/proposed/P1-foundation/tickets/03-fake-run-visible.md) 的 proposed contract，尚未实现。
+- 产品运行后的 Worker 将从版本化 `TaskEnvelope` 进入 `WorkerRuntime.start`；[P1-03](dev_docs/planning/proposed/P1-foundation/tickets/03-fake-run-visible.md) 已有最小派发与 Fake Run 证据，完整连续性及角色协作由后续票验证。
 
 没有 Ticket ID 的实现子 Agent 不自行选择 backlog。用户直接委托的文档维护按 Agent 维护入口执行。原始需求和归档只在对应 Context pointer 触发时加载。
 
@@ -107,11 +109,7 @@ agent_platform/
 
 ## 当前状态
 
-2026-09-05 产品意图已按用户反馈修订；统一图文界面、角色到 Module 的映射及参与式架构建立仍在 [复核](dev_docs/design/human-framework-role-review.md)。P1 与 MVP 旧候选待同步，不能视为已冻结设计。需求来源已补入 [四份双方对话](dev_docs/product/README.md)。
-
-P0 已把旧的整体设计改写成可渐进加载的 Plane → Module → Interface → Ticket 结构，当前等待用户审阅
-Completion Policy 与 P1 施工图。第一条候选实现切片固定为“创建 Goal → 持久化 → 投影显示”；
-产品代码尚未开始，后续能力只按 DevelopmentTicketDAG 推进。
+2026-09-06 Context 生命周期、执行记忆与编排交互方向已专项确认，正式文档、P1-16／17 及相关票已同步。P0 仍 in_review，P1 仍 proposed；已有 P1-00…06 逐票有限授权与实现记录，阶段状态不代表没有代码，也不自动授权下一票。新增行为的差距与验证归属见 [同步记录](dev_docs/verification/2026-09-06-context-orchestration-sync.md)。
 
 旧版 v0.3 已原样保存在
 [归档快照](dev_docs/archive/v0.3-2026-09-04/ARCHIVE-NOTE.md)，不进入默认 Agent Context。

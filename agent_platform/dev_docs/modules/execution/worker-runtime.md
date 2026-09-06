@@ -2,7 +2,7 @@
 
 ```yaml
 status: draft
-updated: 2026-09-05
+updated: 2026-09-06
 plane: Execution
 ```
 
@@ -29,3 +29,13 @@ plane: Execution
 ## Context load
 
 实现或扩展本 Module 时读取本页、当前 Ticket 与直接消费的 [运行时协作契约](../../interfaces/runtime-collaboration.md) 小节；初始协商及图文集成另读 [初始设计与统一展示](../../interfaces/human-design-status.md)。原始对话和完整历史按需追溯，不默认装入 Run。
+
+## Extension records
+
+- **P1-03（首个消费者，冻结）**：RunPort = capabilities/start/events（RunCapabilities：replayable、supportsSnapshot=false、maxEnvelopeBytes=64KiB 诚实声明；FakeRuntimeAdapter 按 FakeRuntimeScriptV1 只发事件，不判真伪）。
+- **P1-06**：HandoffControlPort = control + snapshot；snapshot 只返回公开报告（noHiddenContextRead），实现见 src/runtime/handoff-control-adapter.ts。
+- **P1-07**：WorkspaceCapabilityPort = capabilitiesFor → ready / unsupported / rejected（无能力 → unsupported，绝不静默降级；能力 = 运行时支持矩阵 ∩ envelope.permissions.tools），实现见 src/runtime/workspace-capability-adapter.ts。
+
+## Context 生命周期与协作扩展
+
+P1-16 扩展能力声明与同工作连续运行／接续；原会话不可恢复时明确降级。Run 内模型循环、压缩与恢复由内核承担；Fake 与真实内核分别验证。 行为依据：[Context 生命周期](../../interfaces/context-lifecycle.md)、[运行时协作](../../interfaces/runtime-collaboration.md)、[人类交互](../../interfaces/human-design-status.md)。精确 schema 在对应消费者冻结，文档同步不表示已有实现。

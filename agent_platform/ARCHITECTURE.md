@@ -2,7 +2,7 @@
 
 ```yaml
 status: draft
-updated: 2026-09-05
+updated: 2026-09-06
 scope: Plane、Module registry、长期依赖与全局不变量
 ```
 
@@ -20,7 +20,7 @@ flowchart TB
   User[人] -->|目标／约束／咨询／必要决定| Interaction[Human Interaction]
   Interaction -->|状态图／解释／结果／需决策事项| User
   subgraph ControlPlane[Control Plane]
-    Planning[Semantic Coordination：秘书／参谋／规划／集成]
+    Planning[Semantic Coordination：秘书／参谋／书记／规划／集成]
     Control[确定性控制：角色／策略／调度／状态]
     Verify[验证编排：工具检查与 Reviewer]
     Planning -->|分工／测试设计／集成／重规划提案| Control
@@ -97,6 +97,14 @@ ContextCompiler 可以消费 ReadModel 的已有查询结果，不重新实现�
 
 ContextCompiler 消费角色分工结果，不自行重新分配工作；选取记忆不等于批准记忆内容。角色职责允许按任务组合，不限定为固定枚举；保留 [短生命周期 Agent 自由模板](dev_docs/agent/templates/short-lived-agent.md)，由框架绑定任务、权限、预算和退出条件，运行仍使用 WorkerRuntime。精确契约在首个真实消费者处定义，不另建空管理模块。
 
+### Context 生命周期与编排
+
+WorkContext 跟随连贯工作持续，单次调用、活跃 Run、跨 Run 工作责任与持久历史分别维护。ContextBundle 是选材结果，不代表完整运行上下文；跨开发 Ticket 默认新建 Context，按需继承相关记录。准确事件与留痕行为见 [Context 生命周期契约](dev_docs/interfaces/context-lifecycle.md)。
+
+Control 内的语义协调负责分工、跨包判断和 Context 使用提案；确定性控制校验、登记、路由与执行策略。各工作包可有规划／集成负责人，跨包议题有指定收敛责任；秘书／参谋组织架构／接口变化上报及人类取舍，书记整理来源和分歧。普通交流不自动形成调度依赖。具体闭环见 [运行时协作](dev_docs/interfaces/runtime-collaboration.md)。
+
+平台维护跨 Run 关联与接续策略，WorkerRuntime 适配内核声明的持续执行、压缩及恢复能力；Data 编译材料，不新增独立 Context Plane、记忆存储或每角色常驻进程。
+
 ### 记忆以工程事实和开发轨迹为基础
 
 Data Plane 从三个侧面组织材料，不要求建立独立 MemoryStore 或常驻 Memory Agent：
@@ -109,7 +117,7 @@ Data Plane 从三个侧面组织材料，不要求建立独立 MemoryStore 或�
 
 ContextCompiler 先按任务范围和版本检索当前状态、规范、相关代码关系、测试证据及近期交接；已有文本／语义索引可按需使用。需要新的模型判断时返回材料缺口，由 Control 路径创建短生命周期工作，再携结果引用重新编译，ContextCompiler 不自行启动 Agent。也可通过角色绑定定位相关 Agent，优先读取已有报告，仍不足时使用独立 QueryJob；不要求每次调用全部检索路径。
 
-知识产生者可在工作或交接时记录要点和来源；临时 Agent 按需整理、去重、分析冲突。普通记录经权限、格式与来源检查即可保存，只有改变策略、授权、规范、验收或具有约束力的偏好才进入相应接纳／替代流程，需要新取舍时由人兜底。使用反馈可以改善检索和提示，不能自行扩大授权。
+知识产生者按 [生命周期契约](dev_docs/interfaces/context-lifecycle.md) 在关键选择与检查点记录理由、来源和未解项；临时 Agent 按需整理、去重、分析冲突。普通记录经权限、格式与来源检查即可保存，只有改变策略、授权、规范、验收或具有约束力的偏好才进入相应接纳／替代流程，架构／接口变化按 [统一展示契约](dev_docs/interfaces/human-design-status.md) 主动上报，需要新取舍时由人决定。使用反馈可以改善检索和提示，不能自行扩大授权。
 
 源码描述实际实现，当前有效 Spec／Baseline 规定应当满足的要求；二者冲突应对账，不能以“代码更新”自动覆盖规范。Session 中的“测试通过”只是报告，须关联对应版本的测试 Evidence 才能作为验证依据。
 
@@ -150,7 +158,7 @@ Agent 之间需要有界通信，默认使用任务、报告、提案、问题�
 | Human Interaction | [HumanCollaboration](dev_docs/modules/interaction/human-collaboration.md) | `createGoal(request)`、`goalView(query)`          | first-slice draft |
 | Control           | [PlanCompiler](dev_docs/modules/control/plan-compiler.md) | `request(intent)`、`accept(resultRef)`：有界协调 | extension draft   |
 | Control           | [ControlEngine](dev_docs/modules/control/control-engine.md)               | `submit(command)`                                 | first-slice draft |
-| Control           | [DispatchEngine](dev_docs/modules/control/dispatch-engine.md) | `drive/accept`；`snapshot(query)` 公开快照 | extension draft   |
+| Control           | [DispatchEngine](dev_docs/modules/control/dispatch-engine.md) | `drive(trigger)`（唯一入口）；公开运行快照经 WorkerRuntime.HandoffControlPort.snapshot（P1-06 冻结，noHiddenContextRead）与 ReadModel 视图；运行事实受理属 ControlEngine | extension draft   |
 | Control           | [VerificationEngine](dev_docs/modules/control/verification-engine.md) | `verify(intent) → verification ref`               | planned           |
 | Control           | [ArchitectureReconciler](dev_docs/modules/control/architecture-reconciler.md) | `inspect(intent) → assessment ref`                | planned           |
 | Execution         | [WorkerRuntime](dev_docs/modules/execution/worker-runtime.md) | `capabilities/start/control/events`；可选 `snapshot` | extension draft |
@@ -319,3 +327,7 @@ Slice Integrator 额外获得本切片验收、所有 Module Artifact/Evidence�
 - 当前规划：[P0 DAG](dev_docs/planning/active/P0/DAG.md)
 - 决策理由：[Decision Index](dev_docs/decisions/INDEX.md)
 - 历史来源：[Archive Index](dev_docs/archive/INDEX.md)
+
+## 2026-09-06 增量施工映射
+
+P1-16 在 P1-06 后扩展同工作 Context 连续性与理由留痕；P1-09／10 消费其产物，P1-11 经 P1-10 取得该能力。P1-17 在 P1-16／05 后验证完成工作向新任务继承，P1-15 消费其结果并整合跨包冲突与人类决定闭环。G2 增加 P1-16，G3 通过 P1-15 包含 P1-17。准确依赖仍以 [P1 DAG](dev_docs/planning/proposed/P1-foundation/DAG.md) 为准。

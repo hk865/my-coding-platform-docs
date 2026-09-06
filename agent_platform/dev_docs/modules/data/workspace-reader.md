@@ -2,7 +2,7 @@
 
 ```yaml
 status: draft
-updated: 2026-09-05
+updated: 2026-09-06
 plane: Data
 ```
 
@@ -13,6 +13,8 @@ plane: Data
 ## Interface
 
 候选操作：`read(query) → sourced / unsupported / stale / rejected`。共享字段、拒绝与状态语义唯一来源为 [运行时协作契约](../../interfaces/runtime-collaboration.md)，本页不复制 wire schema。首个消费者：P1-12 首个真实源码读取切片；设计已展开不代表契约已冻结或实现。
+
+注：运行访问控制面（WorkspaceReadLease / WorkspaceCapabilityPort，P1-07 冻结）与本模块分工不同——前者只管借用与能力声明，不读取工作区内容；本模块 read() 首个消费者仍为 P1-12。
 
 ## Dependencies
 
@@ -29,3 +31,7 @@ plane: Data
 ## Context load
 
 实现或扩展本 Module 时读取本页、当前 Ticket 与直接消费的 [运行时协作契约](../../interfaces/runtime-collaboration.md) 小节；初始协商及图文集成另读 [初始设计与统一展示](../../interfaces/human-design-status.md)。原始对话和完整历史按需追溯，不默认装入 Run。
+
+## Context 生命周期与协作扩展
+
+P1-17 复用当前来源读取与版本检查；既有文本／快照可降级，不能把旧执行理由当作当前代码事实。 行为依据：[Context 生命周期](../../interfaces/context-lifecycle.md)、[运行时协作](../../interfaces/runtime-collaboration.md)、[人类交互](../../interfaces/human-design-status.md)。精确 schema 在对应消费者冻结，文档同步不表示已有实现。

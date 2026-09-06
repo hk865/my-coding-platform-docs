@@ -2,7 +2,7 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 kind: tracer-bullet-vertical-slice
 blocked_by:
   - P1-07
@@ -40,12 +40,14 @@ input_artifacts:
       producer: P1-02,
     }
 output_artifacts:
+  - reported-interface-conflict-finding
   - revision-bound-codegraph-snapshot
   - raw-architecture-delta
   - classified-architecture-finding
   - architecture-decision-brief
   - candidate-baseline-proposal
 verification:
+  - reported-conflict-without-delta-test
   - deterministic-codegraph-fixtures
   - raw-delta-purity-tests
   - finding-classification-tests
@@ -74,6 +76,12 @@ verification:
 - 本票首次冻结 ArchitectureReconciler inspection、VerificationEngine code-graph 与 WorkspaceReader read 三个最小 Interface；P1-13/14 只消费这些版本。本票同时创建 inspection、CodeGraph、raw Delta、Finding、DecisionBrief 与 candidate proposal contracts。
 
 ## Acceptance
+
+2026-09-06 扩展依据：[Context 生命周期](../../../../interfaces/context-lifecycle.md)、[运行时协作](../../../../interfaces/runtime-collaboration.md) 与 [人类交互](../../../../interfaces/human-design-status.md)。新增条款尚待本票实施验证。
+
+- 支持执行者／包工头带来源的接口或架构问题输入，即使尚无代码变更或测试失败也可形成 Finding／DecisionBrief；禁止伪造 raw Delta。
+- 各方分歧、版本、选项及受影响工作保留；需要修改契约时产生可供上报的材料。人工协商由 P1-14／15 消费，不能在本票形成反向依赖。
+
 
 本轮扩展依据：[运行时协作 Interface](../../../../interfaces/runtime-collaboration.md)。ContextCompiler 经 WorkspaceReader 获取版本化源码／Git／图索引，首个真实源码消费者冻结其读契约。验证工作树读取中变化、索引落后和图能力缺失不被误报为当前事实；架构规范不会被当前源码自动覆盖。
 

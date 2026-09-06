@@ -2,7 +2,7 @@
 
 ```yaml
 status: draft
-updated: 2026-09-05
+updated: 2026-09-06
 slice: 创建 Goal → 持久化 → 投影显示
 plane: Control
 ```
@@ -103,3 +103,27 @@ bootstrap(command: WorkspaceBootstrapCommand): Promise<WorkspaceBootstrapReceipt
 - 校验失败的 rejection code：`invalid | digest_mismatch | not_empty | idempotency_conflict | unavailable`，全部零写入；
 - bootstrap 产物（entry snapshot/审计 Event/BootstrapManifest snapshot）确定性生成，重放时经 manifest snapshot 重建，同一 fixture 的 manifest 一致；
 - 契约类型见 [Command/Event Interface](../../interfaces/command-event.md) 与 [StateLedger Interface](../../interfaces/state-ledger.md) 的 P1-00 扩展记录。
+## P1-04 extension record：submitEvidence / reduceTask
+
+2026-09-05 [P1-04](../../planning/proposed/P1-foundation/tickets/04-evidence-satisfies-task.md) 版本化扩展：ControlEngine 接口新增 `submitEvidence`、`reduceTask`（submit/bootstrap 形状不变）。实现分派到两个独立入口文件（src/control/evidence-intake.ts、src/control/task-reducer.ts），ControlEngineImpl 仅委托；Evidence 不可变追加/完整幂等/CAS、纯函数 TaskSatisfied 公式与零写入语义见 HANDOFF「P1-04 契约与存储语义（冻结）」；**控制是唯一写 TaskReduction phase 者，本票不归约 Goal（P1-05）**。
+## P1-02 extension record：install / activate / applyPlan
+
+2026-09-05 [P1-02](../../planning/proposed/P1-foundation/tickets/02-plan-revision-visible.md) 版本化扩展：`submit`/`bootstrap` 形状不变；ControlEngine 接口新增 `install`、`activate`、`applyPlan`。
+实现分派到三个独立入口文件（src/control/governance-install.ts、governance-activate.ts、plan-acceptance.ts），ControlEngineImpl 仅做委托；pre-CAS 引用解析（目标已安装、active refs 解析）、guard 顺序与零写入语义见 HANDOFF 冻结清单。HumanCollaboration 面向用户的 Plan 提交入口留给状态台/完整协作票（P1-08/15），本票经 ControlEngine 直接消费票据命令。
+
+## P1-03 extension record：dispatch / run 入口
+
+2026-09-05 [P1-03](../../planning/proposed/P1-foundation/tickets/03-fake-run-visible.md) 版本化扩展：接口新增 dispatchReadiness、claimTask、startRun、runFact（submit/bootstrap 形状不变）。实现分派到 src/control/{readiness,claim,start-run,run-facts}.ts，ControlEngineImpl 仅委托；readiness 零写、claim 单次 CAS 唯一领取、durable outbox 与事件同原子提交；eligibility 的 depends_on 满足以 TaskReduction live phase 为准（dispatch-facts.loadLivePlan，P1-07 起；签名不变）。
+## P1-05 extension record：reduceGoal / goal phase 查询
+
+2026-09-06 [P1-05](../../planning/proposed/P1-foundation/tickets/05-goal-phase-reduction.md) 版本化扩展：接口新增 reduceGoal 与 goal phase 查询（src/control/goal-reducer.ts 独立入口，ControlEngineImpl 委托）；GoalPhaseUpdated 事件与 GoalCompletionGuard 非空检查见 HANDOFF「P1-05 契约与存储语义（冻结）」与 [completion-policy](../../interfaces/completion-policy.md)。
+## P1-06 extension record：recordHandoff / claimReplacement
+
+2026-09-06 [P1-06](../../planning/proposed/P1-foundation/tickets/06-handoff-a-to-b.md) 版本化扩展：接口新增 recordHandoff、claimReplacement（src/control/handoff.ts、replacement-claim.ts）；旧 lease/迟到结果守卫与 replacement CAS 见 HANDOFF「P1-06 契约与存储语义（冻结）」。
+## P1-07 extension record：lease / integration / patch 入口
+
+2026-09-06 [P1-07](../../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展：接口新增 acquireReadLease、acquireWriteLease、releaseWorkspaceLease、recordIntegrationResult、recordPatch（src/control/{workspace-lease,integration-join,patch-record}.ts）；不变量 #7 唯一 Writer = WorkspaceWriteLeaseIndex CAS；细节见 HANDOFF「P1-07 契约与存储语义（冻结）」。
+
+## Context 生命周期与协作扩展
+
+P1-16／17 保存工作关联与记录受理事实；P1-15 校验议题、分工与决定路由。语义分析由正式工作请求完成，reducer 不调用模型。 行为依据：[Context 生命周期](../../interfaces/context-lifecycle.md)、[运行时协作](../../interfaces/runtime-collaboration.md)、[人类交互](../../interfaces/human-design-status.md)。精确 schema 在对应消费者冻结，文档同步不表示已有实现。

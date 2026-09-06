@@ -29,7 +29,7 @@ const routeStubPaths = [
   "dev_docs/product/产品定义.md",
 ];
 const expectedTicketIds = Array.from(
-  { length: 16 },
+  { length: 18 },
   (_, index) => "P1-" + String(index).padStart(2, "0"),
 );
 const p0EvidenceTicketIds = ["01", "02", "03", "04", "05"];
@@ -1423,6 +1423,31 @@ runCheck("G3 requires the complete role collaboration slice", (report) => {
   const ticket = p1Model.tickets.get("P1-15");
   if (!ticket?.metadata.output_artifacts?.includes("autonomous-role-feedback-trace")) {
     report("P1-15 must deliver the role feedback trace");
+  }
+});
+
+runCheck("Context continuity and completed-work inheritance gate coverage", (report) => {
+  const requiredEdges = [
+    ["P1-16", "P1-06"], ["P1-17", "P1-16"], ["P1-17", "P1-05"],
+    ["P1-09", "P1-16"], ["P1-10", "P1-16"], ["P1-15", "P1-17"],
+  ];
+  for (const [consumer, producer] of requiredEdges) {
+    if (!p1Model.tickets.get(consumer)?.metadata.blocked_by?.includes(producer)) {
+      report(consumer + " must consume " + producer);
+    }
+  }
+  const dag = readText(p1DagPath);
+  if (!/^\s*T16\s*-->\s*G2(?:\[|\s*$)/m.test(dag)) {
+    report("G2 must consume P1-16 context continuity evidence");
+  }
+  for (const [id, artifact] of [
+    ["P1-16", "context-continuity-evidence"],
+    ["P1-17", "completed-work-context-evidence"],
+    ["P1-15", "cross-work-package-decision-feedback"],
+  ]) {
+    if (!p1Model.tickets.get(id)?.metadata.output_artifacts?.includes(artifact)) {
+      report(id + " must produce " + artifact);
+    }
   }
 });
 

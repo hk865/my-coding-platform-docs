@@ -2,7 +2,7 @@
 
 ```yaml
 status: proposed
-updated: 2026-09-05
+updated: 2026-09-06
 scope: P1-foundation 的单一端到端发布门禁
 roadmap: ../planning/ROADMAP.md
 phase_dag: ../planning/proposed/P1-foundation/DAG.md
@@ -54,8 +54,8 @@ flowchart LR
 | Release Gate               | 本场景的评价范围                                                          |
 | -------------------------- | ------------------------------------------------------------------------- |
 | G1 Foundation              | Step 1、Plan/Task fixture、Fake Run、Evidence/Goal reducer 与基础重启查询 |
-| G2 Continuity              | G1 + Step 3                                                               |
-| G3 Role Collaboration      | G1 + Step 0/2/5/8，P1-07 与 P1-15 证据 |
+| G2 Continuity              | G1 + Step 3（含 P1-16）                                                               |
+| G3 Role Collaboration      | G1 + Step 0/2/5/5a/8/9，P1-07、P1-17 与 P1-15 证据 |
 | G4 Human Control           | G1 + Step 4                                                               |
 | G5 Architecture Governance | G1/G3 + Step 7                                                            |
 
@@ -97,6 +97,8 @@ snapshot/View 的 Project/Workspace/Goal identity、revision 与 phase 一致，
 
 预期：A2 不回放完整 transcript，仍保留 objective、constraints、unresolved、Evidence/Artifact refs 与 Workspace revision；旧迟到结果不能覆盖新 Attempt。
 
+P1-16 增加同工作连续多轮模型／工具反馈、关键理由增量留痕与真实内核接续验证。注入缺最终总结、原会话不可恢复、必要材料不足；结果必须区分原运行恢复、新 Run 接续和缺口，并保留未知副作用。旧 P1-06 PASS 只证明原换手范围。
+
 ### Step 4：非阻塞查询、控制与目标变更
 
 用户先从 Portfolio 列出两个 Project/Workspace，并在复用相同本地 id 的两个范围之间切换；当前范围的 Goal、
@@ -124,6 +126,14 @@ QueryJob 不刷新源 lease；steer 有 acknowledgement 和 Timeline 记录。
 
 增加角色故障：让 Coder 首次遗漏一个既定测试义务，协调者依据反馈提出授权内测试／返工任务，由框架接受并执行，无需人逐条批准。再制造需要改变验收或 baseline 的冲突，必须携选项升级；不能从旧记忆推断授权。临时分析角色有独立绑定、预算与退出记录，协调者换手后仍可据有界来源继续。
 
+### Step 5a：测试失败之前的跨包架构／接口冲突
+
+两个工作包由不同包工头负责，指定共同集成职责。甲认为接口缺字段，乙认为增加字段会破坏模块职责；即使测试尚未失败也提交带版本的议题。双方有限澄清，必要时正式派发调查；书记整理来源与分歧，秘书／参谋向人说明选项、影响、迁移成本及暂停范围。
+
+先拒绝或延后：拟议变更不得实施，依赖该选择的动作等待，独立工作继续。随后接受一个精确方案：框架经适用的规范／baseline／Plan 和验证路径受理，全部受影响工作收到决定与理由，材料刷新或 Context 重建后继续；旧版本决定和迟到结果被拒绝。共同集成负责人可以换手，议题和等待条件仍可接续。
+
+另测已有明确授权覆盖的契约变化会主动汇总通知且不重复通知，不因无需重复批准而隐藏。该场景不授予额外 baseline 激活权限，P1-14 原决定／迁移／CAS 门禁保持有效。
+
 ### Step 6：证据驱动完成
 
 VerificationEngine 运行增量结构检查、已有 affected/contract/smoke tests 和目标化 Reviewer。GoalGateTask 对可测试功能运行全量测试。
@@ -147,6 +157,10 @@ VerificationEngine 运行增量结构检查、已有 affected/contract/smoke tes
 
 预期：同一界面的状态图与文本事实来自重建后的 State/Evidence/Decision；默认显示进度／阻塞，可展开架构与生命周期。解释标注来源与版本，故意延迟解释时标 stale，最新事实仍可读；不依赖任何 Worker 记忆或 Todo 自报。
 
+### Step 9：完成工作供后续任务继承
+
+消费 P1-17：工作完成并重启平台后创建相关新任务，以新 Context 加载当前规范／代码、此前关键取舍与适用性清单。修改一个旧前提，验证接续者能指出旧理由不适用，保留当前义务而不恢复旧授权或旧完成状态；缺失记录与跨 scope 请求显式拒绝或报告缺口。确定性选材由 P1-17 留证，真实模型继承效果由 P1-15 完整场景验证。
+
 ## 5. 必须保留的 Evidence 与 Artifact
 
 - Goal/Plan/Baseline/Policy revision；
@@ -155,7 +169,7 @@ VerificationEngine 运行增量结构检查、已有 affected/contract/smoke tes
 - Attempt、Run、lease、budget 和 runtime cursor；
 - WorkspaceSnapshot、patch/commit、changedPaths；
 - CompletionClaim、Observation、Evidence、EvidenceBinding、Reviewer verdict；
-- HandoffPacket 与 QueryJob Artifact；
+- HandoffPacket、QueryJob Artifact、关键理由、WorkContext 来源清单、议题／通知与决定投递及材料刷新证据；
 - ArchitectureDelta、Finding、RemediationTask、DecisionBrief/Decision；
 - Portfolio、WorkspaceSummary、PlanMatrix、Todo、TaskDetail、ActiveAgents 和 Timeline 最终投影。
 
@@ -176,7 +190,9 @@ VerificationEngine 运行增量结构检查、已有 affected/contract/smoke tes
 11. 普通任务由系统闭环，只有主观 oracle、未预授权重大变化或高风险授权升级给用户；
 12. baseline activation 不能洗白旧失败或隐式迁移既有 Plan；
 13. 自定义临时角色可安全退出，普通笔记不逐条审批；Context 来源过期或必要材料缺失不能伪装成可用；
-14. 图与文本事实同源，过期解释标明；直接查询无需参谋，快照不支持如实返回。
+14. 图与文本事实同源，过期解释标明；直接查询无需参谋，快照不支持如实返回；
+15. 同工作 Context 持续、理由留痕、能力降级及完成后历史继承可追溯，不依赖最后总结成功；
+16. 无测试失败的跨包契约冲突可上报人并形成决定，拒绝／延后不实施变更；受影响工作更新材料后接续，授权内契约变化也有主动通知。
 
 任一关键事实只能靠 prompt、自觉更新 Todo、完整 transcript 回放或人工查看数据库才能确认，场景即 FAIL。
 

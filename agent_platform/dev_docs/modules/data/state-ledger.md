@@ -83,3 +83,16 @@ EventPage 分页、cursor 连续性和跨 Project 同名本地 ID 隔离。Contr
 Adapter 的存储约束；只在对接时读取
 [`ControlEngine.Interface`](../control/control-engine.md#interface) 或
 [`ReadModelIndex.Interface`](./read-model-index.md#interface)，不装载其 Implementation 或全局设计文档。
+## P1-02 extension record：governance / plan 持久化
+
+2026-09-05 [P1-02](../../planning/proposed/P1-foundation/tickets/02-plan-revision-visible.md) 版本化扩展：新增 commitKind（governance-install / governance-activate / plan-revision），原子性（单事务）、CAS、幂等 replay、EventPage 单调与 cursor 语义不变；事件/snapshot/expected 对齐规则在 src/contracts/ledger-validation.ts，InMemory 与 SQLite 共用。
+
+## P1-03 extension record：dispatch / run 持久化
+
+2026-09-05 [P1-03](../../planning/proposed/P1-foundation/tickets/03-fake-run-visible.md) 版本化扩展：新增 dispatch-claim / dispatch-start / run-fact commitKind（事件/snapshot/expected 对齐规则不变）；TaskLease / TaskAttempt / Run / DispatchOutboxEntry 聚合；outboxIntents 首次非空（claim 的 outboxIntents=[DispatchIntentV1]，与 outbox 聚合逐字段等价）。
+## P1-06 extension record：handoff 持久化
+
+2026-09-06 [P1-06](../../planning/proposed/P1-foundation/tickets/06-handoff-a-to-b.md) 版本化扩展：新增 handoff-record / replacement-claim commitKind；HandoffPacket / ReplacementAttempt / HandoffProvenance 聚合；replacement 的 outbox intent 复用 P1-03 DispatchIntentV1 形状（packet 引用由 ReplacementAttempt 承载）。
+## P1-07 extension record：lease / integration / patch 持久化
+
+2026-09-06 [P1-07](../../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展：新增 workspace-read/write-lease-acquire/release、integration-record、patch-record 六个 commitKind；WorkspaceReadLease / WorkspaceWriteLease / WorkspaceWriteLeaseIndex / IntegrationResult / PatchRecord 聚合；Workspace 聚合 revision 由 ledger CAS 单调推进（patch 登记原子携带 N→N+1；显式 release 不推进）。

@@ -186,3 +186,36 @@ Command 与 Event 的 Goal identity 均为 `(projectId, aggregateType = "Goal", 
 - bootstrap 不绑定单一 Project，其请求 identity 为 `BootstrapCommandIdentity {actor, idempotencyKey}`（区别于含 projectId 的 `CommandIdentity`）；bootstrap fingerprint 为 JCS+SHA-256({schemaVersion, commandType, sourceDigest, entries})；
 - `DomainEvent` 联合 = GoalCreated | ProjectBootstrapped | WorkspaceBootstrapped；未知 eventType/schemaVersion 的消费者（含 ReadModelIndex）必须停止并报告，不得跳过；
 - 可执行契约见产品代码 `src/contracts/bootstrap.ts`、`src/contracts/events.ts`（产品代码根：`/home/han001/projects/agents/agent_platform`）。
+## P1-03 extension record：dispatch / run 命令与事件
+
+2026-09-05 [P1-03](../planning/proposed/P1-foundation/tickets/03-fake-run-visible.md) 版本化扩展（v1 既有语义不变）：新增 claim/start/runFact 命令、dispatch-claim / dispatch-start / run-fact 三个 commitKind 与 TaskClaimed / RunStarted / RunEventRecorded / RunOutcomeUnknown 四事件；outbox 语义（intentId===attemptId、pending→started→done、与事件同原子提交）；重复/迟到/冲突按 per-run sequence 拒绝，不回退 Task/Run revision；TaskEnvelope 有界（64KiB、无完整 transcript）。相关：eligibility 的 depends_on 满足以 TaskReduction live phase 为准（plan 快照 phase 为声明值；P1-07 起由 dispatch-facts.loadLivePlan 派生，readiness/claim 均接入，签名不变）。可执行契约见产品代码 src/contracts/dispatch.ts、ledger-validation.ts（产品代码根：/home/han001/projects/agents/agent_platform，IMPLEMENTATION-HANDOFF.md「P1-03 契约与存储语义（冻结）」）。
+
+## P1-04 extension record：evidence / reduction commands & events
+
+2026-09-05 [P1-04](../planning/proposed/P1-foundation/tickets/04-evidence-satisfies-task.md) 版本化扩展（v1 既有语义不变）：
+
+- 新命令：SubmitEvidence（claim/observation/verdict 三种证据，schemaVersion 1；fingerprint=JCS+SHA-256({schemaVersion, commandType, projectId, aggregateId(evidenceId), expectedRevision=0, payload:{evidence}})；同 identity+fingerprint 重放 committed(replayed)，同 identity 异 fingerprint=idempotency_conflict，异 identity 复用 evidenceId=revision_conflict——**完整幂等，与 run-fact 的“无幂等记录”语义相反**）、ReduceTask（schemaVersion 1；纯函数归约提交 verification-result；同样完整幂等）；
+- 新事件（v1）：EvidenceAdmitted（Evidence 聚合，aggregateRevision=1）、TaskReductionUpdated（TaskReduction 聚合，aggregateRevision 递增 k），列入 DomainEvent 联合（KNOWN_EVENT_TYPES 同步；未知类型仍强制停止，不跳过）；
+- 相关：CompletionClaim=EvidenceV1(kind=claim) 且**强制 outcome=INCONCLUSIVE**（自报不是证据 PASS）；Worker/Reviewer 不能写 Task.phase（Completion Policy 权限边界）；可执行契约见产品代码 src/contracts/evidence.ts、reduction.ts（产品代码根：/home/han001/projects/agents/agent_platform，IMPLEMENTATION-HANDOFF.md「P1-04 契约与存储语义（冻结）」）。
+## P1-02 extension record：governance / plan commands & events
+
+2026-09-05 [P1-02](../planning/proposed/P1-foundation/tickets/02-plan-revision-visible.md) 版本化扩展（v1 CreateGoal 语义不变）：
+
+- 新命令：InstallCompletionPolicyRevision / InstallArchitectureBaselineRevision / ActivateProjectCompletionPolicy / ActivateProjectArchitectureBaseline / ApplyPlanRevision（schemaVersion 1；经 ControlEngine.install/activate/applyPlan 进入；fingerprint 见 src/contracts/governance.ts、plan.ts）；
+- 新事件（v1）：CompletionPolicyInstalled / ArchitectureBaselineInstalled / CompletionPolicyActivated / ArchitectureBaselineActivated / PlanRevisionAccepted（列入 DomainEvent 联合；未知类型仍强制停止，不跳过）；
+- 本票不创建 Run / TaskAttempt / dispatch outbox；PlanRevisionAccepted 之后不触发任何派发事实。
+## P1-05 extension record：goal phase reduction command & event
+
+2026-09-05 [P1-05](../planning/proposed/P1-foundation/tickets/05-goal-phase-reduction.md) 版本化扩展（v1 既有语义不变）：
+
+- 新命令：ReduceGoal（schemaVersion 1；aggregateId=goalId 且 payload.goalId 必须相等；fingerprint=JCS+SHA-256({schemaVersion, commandType, projectId, aggregateId, expectedRevision, payload:{goalId}})；**完整幂等**（同 identity+fingerprint → committed(replayed)；同 identity 异 fingerprint → idempotency_conflict；异 identity 复用 goalId → revision_conflict），与 evidence/verification-result 语义一致，与 run-fact 的"无幂等记录"语义相反）；
+- 新事件（v1）：GoalPhaseUpdated（GoalPhase 聚合，aggregateRevision 单调 k；payload=goalId + previousPhase + phase + reasonCodes + explanation + sideEffectReconciliation + planRef + reducedAt），列入 DomainEvent 联合（KNOWN_EVENT_TYPES 同步；未知类型仍强制停止，不跳过）；
+- 相关：Goal phase 只能由 ControlEngine.reduceGoal 归约（Worker/Reviewer/ReadModel 均不写）；可执行契约见产品代码 src/contracts/goal-phase.ts（产品代码根：/home/han001/projects/agents/agent_platform，IMPLEMENTATION-HANDOFF.md「P1-05 契约与存储语义（冻结）」）。
+
+## P1-06 extension record：handoff 命令与事件
+
+2026-09-06 [P1-06](../planning/proposed/P1-foundation/tickets/06-handoff-a-to-b.md) 版本化扩展（v1 既有语义不变）：recordHandoff / claimReplacement 命令、handoff-record / replacement-claim commitKind 与 HandoffRecorded / ReplacementClaimed 事件；HandoffPacket 有界且无完整 transcript（noFullTranscript）；公开运行快照经 WorkerRuntime.HandoffControlPort.snapshot（noHiddenContextRead）。可执行契约见产品代码 src/contracts/handoff.ts、handoff-control.ts（产品代码根：/home/han001/projects/agents/agent_platform，IMPLEMENTATION-HANDOFF.md「P1-06 契约与存储语义（冻结）」）。
+
+## P1-07 extension record：workspace lease / integration / patch 命令与事件
+
+2026-09-06 [P1-07](../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展（v1 既有语义不变）：acquireReadLease / acquireWriteLease / releaseWorkspaceLease / recordIntegrationResult / recordPatch 五命令、六个 commitKind（workspace-read-lease-acquire / workspace-read-lease-release / workspace-write-lease-acquire / workspace-write-lease-release / integration-record / patch-record）与六事件（WorkspaceReadLeaseGranted / WorkspaceReadLeaseReleased / WorkspaceWriteLeaseGranted / WorkspaceWriteLeaseReleased / IntegrationJoined / PatchRecorded）。可执行契约见产品代码 src/contracts/{workspace-lease,workspace-capability,integration,patch}.ts（产品代码根：/home/han001/projects/agents/agent_platform，IMPLEMENTATION-HANDOFF.md「P1-07 契约与存储语义（冻结）」）。

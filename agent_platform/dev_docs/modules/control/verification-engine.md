@@ -2,7 +2,7 @@
 
 ```yaml
 status: draft
-updated: 2026-09-05
+updated: 2026-09-06
 plane: Control
 ```
 
@@ -29,3 +29,7 @@ ControlEngine、ContextCompiler、ArtifactVault。长期调用关系以 [ModuleD
 ## Context load
 
 实现或扩展本 Module 时读取本页、当前 Ticket 与直接消费的 [运行时协作契约](../../interfaces/runtime-collaboration.md) 小节；初始协商及图文集成另读 [初始设计与统一展示](../../interfaces/human-design-status.md)。原始对话和完整历史按需追溯，不默认装入 Run。
+
+## Context 生命周期与协作扩展
+
+审查绑定明确版本和范围；前次审查可作为来源，新版本重新判断适用性；角色共识不替代有效 Evidence。 行为依据：[Context 生命周期](../../interfaces/context-lifecycle.md)、[运行时协作](../../interfaces/runtime-collaboration.md)、[人类交互](../../interfaces/human-design-status.md)。精确 schema 在对应消费者冻结，文档同步不表示已有实现。

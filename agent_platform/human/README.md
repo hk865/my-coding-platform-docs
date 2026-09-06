@@ -23,7 +23,9 @@
 
 ## 当前审阅入口
 
-文档已按当前意见收敛。最后主要查看 [MVP 场景](../dev_docs/evaluation/mvp-scenario.md) 是否代表你要的完整故事，以及 [P1 DAG](../dev_docs/planning/proposed/P1-foundation/DAG.md) 的阶段范围。角色与架构若需改动仍回到 PRODUCT／ARCHITECTURE；字段、Module 细节与票据同步由 Agent 维护。历史讨论见 [角色复核稿](../dev_docs/design/human-framework-role-review.md) 与 [双方对话索引](../dev_docs/product/README.md)。
+**2026-09-06：Context 生命周期与编排交互方向已确认，正式文档及 Ticket 已同步。** 人类审阅过程保留在 [集中稿](../dev_docs/design/context-lifecycle-human-review.md)；当前行为查看 [PRODUCT](../PRODUCT.md) 与 [完整 MVP 场景](../dev_docs/evaluation/mvp-scenario.md)，具体改动与实现缺口见 [同步记录](../dev_docs/verification/2026-09-06-context-orchestration-sync.md)。
+
+新增 P1-16／17 按依赖接入现有工作，已有 P1-03／06 证据按原范围保留。你无需重新审阅字段；新的业务选择再提交具体取舍。P0/P1 整体状态与新增实现授权未由这次文档修改改变。
 
 项目建立位置见 [项目位置与建项入口](../dev_docs/agent/project-location.md)，由 Agent 维护具体路径和派发配置。
 
