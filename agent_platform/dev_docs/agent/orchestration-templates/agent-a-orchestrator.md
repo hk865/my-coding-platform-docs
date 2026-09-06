@@ -13,10 +13,55 @@ authority:
 subagent_power: unrestricted dispatch (implementations always go to B; analysis goes to C)
 ```
 
-## 0. 启动
+## 0. 启动：先学读文档（读取方法）
 
-1. 核实路径：文档根（见 `README.md`）、产品代码根、执行内核；读取本票 `<ticket_path>`、
-   `DAG.md`、`AGENTS.md`、`PRODUCT.md`、`ARCHITECTURE.md` 与相关 `interfaces/`。
+### 0.1 工具与路径纪律
+
+- **只读工具**：用 read/glob/grep 读文本与检索（结果带行号；大文件 offset/limit 续读）；不用 shell
+  cat/grep 冒充读取结论；不凭记忆或派发消息推断文件内容——**先读再断言**。
+- **路径落实**：`ls`+`git log --oneline -1` 落实三个根（文档根见 `README.md`、产品代码根、执行内核）
+  与当前 HEAD；相对链接按"**文件所在目录**"解析（如 ticket 内 `../../AGENTS.md` 相对 ticket 目录；
+  `dev_docs/…` 相对文档根）；挂载/大小写差异按 `pwd`/`realpath` 实测，不脑补路径。
+
+### 0.2 读取顺序（先总后分、先约束后细节）
+
+1. 入口：`AGENTS.md`——两种 Agent 入口（Development Ticket 构建本产品 / Runtime Task 运行用户工作）、
+   完成边界（**Ticket 状态由开发流程依据 Evidence 更新，实施者与 A 都不改**）、启动顺序五步。
+2. 本票：`tickets/NN-….md`——先读 yaml 元数据（status/blocked_by/input/output artifacts/
+   contracts_to_create/interfaces_to_freeze/verification），再读 What it delivers 与 **Acceptance 段**
+   （逐条编号；区分"原验收"与"09-06 扩展验收"——扩展段以
+   `dev_docs/verification/2026-09-06-context-orchestration-sync.md` 的授权范围为界）。
+3. 图与边界：`DAG.md`（本票边、并行窗口、Gate 定义、interfaces_to_freeze 规则）→
+   `PRODUCT.md`（MVP 必须证明/非目标/成功标准）→ `ARCHITECTURE.md`
+   （Plane 图、Module Registry、三类 DAG、**全局不变量**——读不变量时逐条对照本票是否触及）。
+4. 语义：相关 `interfaces/*.md`（先读 Purpose/Interface/**Invariants**/Test seam/Explicitly not
+   responsible；**extension records 按票追加**——旧记录不追溯改写，读"当前语义"看最新一条 extension record）。
+5. 模块：`dev_docs/modules/**`（职责/依赖/测试面；只读与当前角色相关的那一节）。
+6. 产品基线：`src/contracts/**`（上游票冻结形状=最大参照）→ 双适配器实现 → 双 harness →
+   既有契约套件/restart 探针（先读上一票的，再读下下票要消费的）。
+7. 历史与证据：`IMPLEMENTATION-HANDOFF.md` **顶部 = 当前票**（yaml：status/shared_baseline/
+   parallel_scope/merge_surface_note + 「契约与存储语义（冻结）」「已冻结的代码入口」「三路并行」
+   「integrator 裁决」）；其下各段为**历史保留**（原文不改）；`verification/p1-*-implementation-evidence.md`
+   只证明**当时**状态；本票相关旧记录若有出入，以"最新正式文档 + 产品代码"为准并登记分歧。
+
+### 0.3 现状 vs 历史、交叉核对
+
+- **矛盾裁决顺序**：正式文档（front 元数据/接口/模块）> 产品代码 wire schema > 证据/记录；冻结契约以
+  产品代码（首个消费者固定）为准；"只追加不修改"：新票给旧记录加注记（如 HANDOFF「09-06 DAG 注记」），
+  不改原文。
+- **三对交叉核对**：DAG 边 ↔ HANDOFF lane 表 ↔ 票据 blocked_by；票据 contracts_to_create ↔
+  `src/contracts/` 实有文件 ↔ 契约套件引用；验收条目 ↔ 测试名/断言 ↔ **实测数字**
+  （typecheck/双套件/集成/restart/validate-docs——数字必须实测，证据里不出现"据称/应该"）。
+
+### 0.4 读后固定动作
+
+- 读取清单 + 基线核实结果 + 复跑数字 → 写进 HANDOFF（yaml/shared_baseline）与证据文档；
+- 把与本票 scope 相关的冻结边界/裁决点直接写进 B/C 派发消息（减少子 Agent 重复裁决）；
+- 引用任何上游产物必须带 revision（commit hash/文件+行号）；未证/存疑单独标注并写获取路径。
+
+### 0.5 启动步骤
+
+1. 核实路径与 HEAD（见 0.1）；按 0.2 顺序读完文档后，**复核**（而非盲信）用户派发消息中的基线数字。
 2. 核实上游基线：上游票验收 commit（typecheck/测试数/套件数/validate-docs 数）+ 上游 Artifact refs；
    若本地 main 未推送 GitHub，**推送需用户授权**（按先例不自动推送）。
 3. 核对并行窗口（DAG）：本票与哪些票并行、哪些消费产物尚未验收（如 09/10 需 08+16）；
