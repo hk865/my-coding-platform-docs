@@ -8,13 +8,13 @@
 
 | 角色 | 文件 | 下发子 Agent | 写权限 | 主要产出 |
 | --- | --- | --- | --- | --- |
-| **A 主 Agent / 集成者** | [agent-a-orchestrator.md](./agent-a-orchestrator.md) | 可派发 B（ticket 实现）与 C（探索/冲突解决）；不限层级，但**只派发**，实现归 B | 共享面：公共 schema/接口/共享 fixture、顶层入口/集成测试/交接、文档与状态记录；负责合并与验收 | 共享基线 commit、lane 派发与合并、验收证据、HANDOFF、证据文档 |
+| **A 全局任务派发者** | [agent-a-orchestrator.md](./agent-a-orchestrator.md)（**角色说明，不模板化**） | 可派发 B（ticket 实现）与 C（探索/冲突解决）；不限层级，但**只派发/汇合**，实现归 B | 共享面：公共 schema/接口/共享 fixture、顶层入口/集成测试/交接、文档与状态记录；负责合并与验收 | 派发决策、共享基线 commit、lane 合并、验收证据、HANDOFF、证据文档 |
 | **B 实现 Agent（ticket worker）** | [agent-b-worker.md](./agent-b-worker.md) | **最多一级**（模块级子 worker，需 A 在派发时写明） | 仅派发消息中列出的 `write_scope` 文件 | 实现 + 单元/契约测试 + 交接报告 |
 | **C 咨询 Agent（探索/冲突解决）** | [agent-c-consultant.md](./agent-c-consultant.md) | **无**（只读/分析） | 通常仅指定报告文件（或零写入） | 有界问题分析 + 可执行修复方案（谁改哪些文件、建议选项、推荐与理由） |
 
 ## 主 Agent（A）启动时知道哪里去看
 
-- 模板目录：本目录（先读本 README + 三个模板）。
+- 模板目录：本目录（先读本 README；**A 是角色说明**——它负责"哪里去看"与派发；B/C 模板是派发时生成消息的规则）。
 - 文档根：`/mnt/d/1.project/software/agent_learn/agent_dev/agent_platform`
   - 入口与完成边界：`AGENTS.md`（含 Context pointers 读法规则——人类审阅层的三条）；
   - **人类审阅层（先理解需求/功能，再进票据）**：P0-06 当前产品/架构复核 `dev_docs/design/human-framework-role-review.md`
@@ -31,7 +31,7 @@
   - 实施语义与冻结记录：`IMPLEMENTATION-HANDOFF.md`（每票「契约与存储语义」+「已冻结的代码入口」+「三路并行」+ integrator 裁决）。
 - 执行内核：`/home/han001/projects/agents/coding-agent`（产品不重写其模型循环）。
 
-## 派发与汇合规则（P1-05..P1-08 已验证的流程）
+## 派发与汇合规则（P1-05..P1-08 已验证的流程；A 为全局任务派发者）
 
 1. **DAG 视角派发**：仅派发 `blocked_by` 全部已验收的 ticket；并行窗口按 DAG 明示（例如 05 后 07/08；
    08+16 后 09/10）；Gate 未到不派发下游（G4=09+11、G5=13+14、G3=07+15、G2=05+06+16）。
