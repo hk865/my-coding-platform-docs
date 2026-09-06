@@ -8,11 +8,11 @@
 
 | 角色 | 文件 | 下发子 Agent | 写权限 | 主要产出 |
 | --- | --- | --- | --- | --- |
-| **A 全局任务派发者** | [agent-a-orchestrator.md](./agent-a-orchestrator.md)（**角色说明，不模板化**） | 可派发 B（ticket 实现）与 C（探索/冲突解决）；不限层级，但**只派发/汇合**，实现归 B | 共享面：公共 schema/接口/共享 fixture、顶层入口/集成测试/交接、文档与状态记录；负责合并与验收 | 派发决策、共享基线 commit、lane 合并、验收证据、HANDOFF、证据文档 |
-| **B 实现 Agent（ticket worker）** | [agent-b-worker.md](./agent-b-worker.md) | **最多一级**（模块级子 worker，需 A 在派发时写明） | 仅派发消息中列出的 `write_scope` 文件 | 实现 + 单元/契约测试 + 交接报告 |
-| **C 咨询 Agent（探索/冲突解决）** | [agent-c-consultant.md](./agent-c-consultant.md) | **无**（只读/分析） | 通常仅指定报告文件（或零写入） | 有界问题分析 + 可执行修复方案（谁改哪些文件、建议选项、推荐与理由） |
+| **A 全局任务派发者** | **不在本目录**——A 的 prompt 由编排者（用户/会话/流程）直接下发，不模板化 | 可派发 B（ticket 实现）与 C（探索/冲突解决） | 共享面：公共 schema/接口/共享 fixture、顶层入口/集成测试/交接、文档与状态记录；负责合并与验收 | 派发决策、共享基线 commit、lane 合并、验收证据、HANDOFF、证据文档 |
+| **B 实现 Agent（ticket worker）** | [agent-b-worker.md](./agent-b-worker.md)（模板） | **最多一级**（模块级子 worker，需 A 在派发时写明） | 仅派发消息中列出的 `write_scope` 文件 | 实现 + 单元/契约测试 + 交接报告 |
+| **C 咨询 Agent（探索/冲突解决）** | [agent-c-consultant.md](./agent-c-consultant.md)（模板） | **无**（只读/分析） | 通常仅指定报告文件（或零写入） | 有界问题分析 + 可执行修复方案（谁改哪些文件、建议选项、推荐与理由） |
 
-## 主 Agent（A）启动时知道哪里去看
+## 派发者（A）视角：启动时知道哪里去看
 
 - 模板目录：本目录（先读本 README；**A 是角色说明**——它负责"哪里去看"与派发；B/C 模板是派发时生成消息的规则）。
 - 文档根：`/mnt/d/1.project/software/agent_learn/agent_dev/agent_platform`
