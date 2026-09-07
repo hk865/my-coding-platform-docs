@@ -90,9 +90,25 @@ verification:
 本轮扩展依据：[运行时协作 Interface](../../../../interfaces/runtime-collaboration.md)。本票补充冻结 DispatchEngine.SnapshotPort 与 WorkerRuntime 可选公开快照能力；测试 unsupported／stale 显式返回、仅在请求与授权允许时转 QueryJob。查询角色可由自由模板实例化，仍只读且不影响源 Run。
 
 - 机械问题仍由 P1-08 ReadModel 直接回答，不创建 QueryJob；
+## Implementation record（有限授权，2026-09-06 连续窗口；status 保持 proposed）
+
+- 证据：dev_docs/verification/p1-09-implementation-evidence.md。
+- 实测：typecheck 0；全量 135 files / 965 tests PASS / 0 skip；双适配器 7+7；restart 1/1；集成 2/2。
+- 冻结：HumanCollaboration.QueryJobPort、DispatchEngine.QueryJobDrivePort + SnapshotPort、ContextCompiler.QueryContextPort、WorkerRuntime.ReadOnlyQueryPort + PublicSnapshotPort（src/contracts/query-job.ts，v1）。
+- 旧验收记录未改动；仅追加本条。
+
+（续）
 - QueryJob 具有独立 ID、Run、Context、预算、超时和只读权限；
 - Query Context 有硬大小上限，只含选择任务的当前状态、相关 refs 与来源，不含隐藏思维链或完整 transcript；
 - QueryJob 启动、运行和完成期间，源 Worker 的 current phase、lease 和预算不变；
 - QueryJob 无权写目标 Workspace、提交 Runtime Task CompletionClaim 或刷新源 lease；
 - 回答引用使用的 revision/Evidence/Artifact，并在输入变 stale 时明确标记；
+
+## Implementation record（有限授权，2026-09-06 连续窗口；status 保持 proposed）
+
+- 证据：dev_docs/verification/p1-09-implementation-evidence.md。
+- 实测：typecheck 0；全量 135 files / 965 tests PASS / 0 skip；契约套件双适配器 7+7；restart 1/1；集成 2/2。
+- 冻结：HumanCollaboration.QueryJobPort、DispatchEngine.QueryJobDrivePort + SnapshotPort、ContextCompiler.QueryContextPort、WorkerRuntime.ReadOnlyQueryPort + PublicSnapshotPort（src/contracts/query-job.ts，v1）。
+- 本票不改变源 Task/Goal phase；G4 等待 P1-11；P1-15 等待 09+14+17。
+- 旧验收记录未改动；仅追加本条。
 - QueryJob 失败或超时不会改变源 Task/Goal phase。

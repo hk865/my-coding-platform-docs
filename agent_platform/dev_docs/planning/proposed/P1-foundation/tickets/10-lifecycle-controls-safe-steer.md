@@ -91,3 +91,11 @@ verification:
 - 重复命令不重复 side effect，过期 acknowledgement 不覆盖新 Run；
 - Runtime 无法确认结果时保持 outcome_unknown，不猜成暂停、取消或成功；
 - UI 不能直接杀进程或修改 Task/Goal phase。
+
+## Implementation record（有限授权，2026-09-06 连续窗口；status 保持 proposed）
+
+- 证据：dev_docs/verification/p1-10-implementation-evidence.md。
+- 实测（产品根 ee53869）：typecheck 0；全量 130 files / 947 tests PASS / 0 skip；双适配器 7+7；restart 1/1；集成 2/2；validate-docs 13/13（上轮记录）。
+- 冻结：HumanCollaboration.ControlCommandPort、DispatchEngine.ControlIntentPort、WorkerRuntime.LifecycleControlPort（src/contracts/control-intent.ts，v1）。
+- 本票无 Task/Goal phase 写入；P1-11（←10）已解锁。
+- 旧验收记录未改动；仅追加本条。

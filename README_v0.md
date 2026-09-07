@@ -1,28 +1,21 @@
-# my-coding-platform-docs
+# my-coding-platform-docs —— README v0（历史快照）
 
-> 当前版本入口（2026-09-07）。早期快照见 [README_v0.md](README_v0.md)（2026-09-05）。
+> **本文件是历史版本（v0，2026-09-05）**，仅作追溯；当前入口见
+> [README.md](README.md)（2026-09-07 最新版）。本页保留当时的内容原文如下。
+
+> README v1 — 本仓库的概览入口。完整的人类入口与文档路由见
+> [`agent_platform/README.md`](agent_platform/README.md)。
 
 ## 这是什么
 
-本仓库保存 **Agent Platform** 产品的设计与规划文档、Tracer-bullet 实现记录与验收证据，
-不含产品代码本身。
+本仓库只保存 **Agent Platform** 产品的设计与规划文档，不含产品代码。
 
 Agent Platform 是建立在 `coding-agent` 执行内核之上的独立产品：它保存长期
 Goal、Task、Evidence 与 Agent 状态，负责规划、调度、验证、交接与人机协作；
 `coding-agent` 只负责一次 Run 内的模型、工具、安全和 Context 循环。
 两者是两个产品边界（见 [ADR-0001](agent_platform/dev_docs/decisions/0001-separate-platform-from-execution-kernel.md)）。
 
-## 当前状态（2026-09-07）
-
-- **P0 产品定义与开发地图**：`in_review`，等待 [P0-06 用户审阅](agent_platform/dev_docs/planning/active/P0/tickets/06-user-review.md)；
-- **P1-foundation**：阶段状态仍为 `proposed`（受 P0-06 门禁），但全部纵向切片票
-  （[P1-00…P1-17](agent_platform/dev_docs/planning/proposed/P1-foundation/DAG.md)）均已实现并留有验收记录：
-  - 全量 174 files / 1193 tests PASS（0 skip / 0 fail），typecheck 0，validate-docs 13/13；
-  - 发布门禁 [G1…G5](agent_platform/dev_docs/verification/) 证据全部 **PASS**；
-  - [MVP 评议](agent_platform/dev_docs/verification/mvp-review.md)：答辩通过（候选，
-    待人类确认；本仓库推送即为此授权项之一）。
-- 产品代码在独立目录/仓库（执行内核为 `coding-agent`），本仓库只保存文档、契约、证据与决策记录；
-- 阶段批准与逐票授权分别查阅：已有实现记录不等同于阶段状态已提升。
+当前阶段：**设计期（P0 进行中，P1 为候选）**，产品代码尚未开始。
 
 ## 快速导航
 
@@ -34,15 +27,9 @@ Goal、Task、Evidence 与 Agent 状态，负责规划、调度、验证、交�
 | 人类管理与审阅入口 | [human/README](agent_platform/human/README.md) |
 | 工作 Agent 执行入口 | [AGENTS.md](agent_platform/AGENTS.md) |
 | 当前规划与施工图 | [ROADMAP](agent_platform/dev_docs/planning/ROADMAP.md) |
-| P1 施工 DAG | [P1-foundation DAG](agent_platform/dev_docs/planning/proposed/P1-foundation/DAG.md) |
 | MVP 评价场景 | [mvp-scenario](agent_platform/dev_docs/evaluation/mvp-scenario.md) |
-| MVP 评议结论 | [mvp-review](agent_platform/dev_docs/verification/mvp-review.md) |
-| 门禁证据（G1–G5） | [verification/](agent_platform/dev_docs/verification/) |
 | 任务完成规则 | [Completion Policy](agent_platform/dev_docs/interfaces/completion-policy.md) |
-| Context 生命周期契约 | [context-lifecycle](agent_platform/dev_docs/interfaces/context-lifecycle.md) |
-| Agent 编排模板（B/C） | [orchestration-templates](agent_platform/dev_docs/agent/orchestration-templates/README.md) |
 | 文档责任划分 | [document-ownership](agent_platform/dev_docs/document-ownership.md) |
-| 历史推导与冲突记录 | [logs](agent_platform/dev_docs/logs/README.md)（仅按需） |
 
 ## 目录结构
 
@@ -56,7 +43,7 @@ agent_platform/
 ├── human/                     人类管理与审阅入口
 └── dev_docs/
     ├── document-ownership.md  文档职责与权威关系
-    ├── agent/                 Agent 执行流程、启动提示词、编排模板（B/C）
+    ├── agent/                 Agent 执行与变更同步流程
     ├── modules/               施工前沿的 Module 说明
     ├── interfaces/            跨 Module 的版本化契约
     ├── planning/              ROADMAP、阶段 DAG 与叶子 Ticket
@@ -64,18 +51,26 @@ agent_platform/
     ├── evaluation/            端到端发布门禁
     ├── product/               用户表达、双方对话与推导索引（按需读取）
     ├── design/                导航图与候选设计复核
-    ├── verification/          文档检查、逐票验收证据与 G1–G5 门禁证据
-    ├── logs/                  冲突报告与过程记录（按需）
+    ├── verification/          文档结构检查与 P0 Evidence
     └── archive/               已替代内容的历史快照（不进入默认 Context）
 ```
+
+## 现状摘要（2026-09-05）
+
+- **P0 产品定义与开发地图**：`in_review`。已归档旧版来源、重写产品/领域/架构地图、
+  切分 Plane→Module→Interface、形成首个纵向切片契约与 P1 候选施工图；正等待用户
+  审阅 Completion Policy 与施工地图（P0-06）。
+- **P1-foundation**：`proposed`。以 Agent-sized 纵向切片交付“可持久化、可观察、
+  可换手、Evidence 归约”的最小闭环；激活需 P0-06 用户批准。
+- 旧版 v0.3 快照保存在 [archive](agent_platform/dev_docs/archive/INDEX.md)，
+  仅用于历史追溯。
 
 ## 文档治理
 
 - 三个入口（人类、开发 Agent、未来的 Runtime Worker）各走各的入口文档；
 - 三个 DAG（Module 依赖 / 开发 Ticket / 运行时执行）用途与生命周期不同，不得合并；
 - 同一事实只保存在一个层级，顶层地图只做路由，不复制细节；
-- 归档、用户需求原文与对话来源不进入默认 Agent Context，按需加载；
-- Worker 只能提交 CompletionClaim；Task/Goal 状态由 ControlEngine 依据 Evidence 归约。
+- 归档与用户需求原文不进入默认 Agent Context，按需加载。
 
 ## 文档检查
 
@@ -85,5 +80,4 @@ agent_platform/
 node agent_platform/dev_docs/verification/validate-docs.mjs
 ```
 
-脚本校验本地链接、状态守卫、DAG 无环、Ticket 元数据与归档摘要等治理规则
-（当前 13/13 全部通过）。
+脚本校验本地链接、状态守卫、DAG 无环、Ticket 元数据与归档摘要等治理规则。

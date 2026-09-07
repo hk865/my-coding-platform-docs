@@ -96,3 +96,17 @@ verification:
 - 被替代 revision 和历史 FAIL 保留；Evidence 只通过新 binding 重新计算 applicability；
 - 新 revision 的 required 集合重新通过 P1-02/P1-05 guards；
 - 控制台显示哪些 Task 保留、取消、替代、重新验证或恢复执行。
+
+---
+
+## Implementation record（2026-09-07，integrator；Ticket 状态保持 proposed——由开发流程依据 Evidence 更新）
+
+- **验收**：产品根 main **6d70494**；typecheck 0；全量 145 文件 / **1025 tests PASS（0 skip）**；
+  双适配器同套件 10/10 + 10/10；真实 SQLite 集成 2/2；restart 等价 1/1（close→reopen 同 DB：view/observedCursor/goal revision 一致）；
+  P1-11-EVIDENCE 块 1/1；doc validate-docs 13/13。
+- **证据**：dev_docs/verification/p1-11-implementation-evidence.md（验收映射 + 裁决记录）。
+- **范围**：三个最小 Interface 首次冻结（HumanCollaboration.GoalChangePort / PlanCompiler.PlanProposalPort /
+  ContextCompiler.PlanningContextPort）；apply fold = [PlanRevisionAccepted, PlanRevisionSuperseded, GoalRevisionRecorded]；
+  任务集合在本票不可变；委托策略路径不在本票（P0-06 复核：需单独明确契约后同步）。
+- **Gate**：G4（= P1-09 + P1-11）在本票验收后**成立**（G4 证据：dev_docs/verification/g4-gate-evidence.md）。
+- **授权与连续性**：有限授权（2026-09-06 连续窗口）；本运行继续推进下一票（P1-13 或按 DAG 顺序）；GitHub 推送仍需用户授权。

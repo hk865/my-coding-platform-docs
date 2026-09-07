@@ -66,3 +66,11 @@ verification:
 ## Verification
 
 注入记录正文已保存但引用未登记、崩溃缺最终总结、旧 lease 迟到结果、原会话不可恢复与必要材料缺失。对照接续前后的义务、关键理由、来源和未知结果；通过公开 Interface 与 View 验证，不直接修改存储表。
+
+## Implementation record（有限授权，2026-09-06 连续窗口；status 保持 proposed）
+
+- 证据：`dev_docs/verification/p1-16-implementation-evidence.md`（验收映射 7/7 + 集成裁决 6 条）。
+- 实测（产品根 fa9389d）：typecheck 0 errors；全量 **852 passed / 23 skipped**（23 = P1-12 骨架按 isP112Ready 探针跳过）；P1-16 契约套件双适配器 **16+16**；restart 1/1；真实 SQLite 集成 3/3；真实内核接续证据 1/1（真实 CLI run→中断→resume 同 session→完成；能力降级证据=模型端点本地 SSE 替身）；validate-docs **13/13**。
+- 冻结：ControlEngine.WorkRecordPort / ContextCompiler.WorkContextPort / WorkerRuntime.ContextContinuationPort（src/contracts/context-continuity.ts、work-context-port.ts、context-continuation-port.ts，v1）；契约 WorkContextBinding/ExecutionNote/ContextContinuationResult。
+- 本票不做 P1-17（完成后继承）、P1-09、P1-10；G2（05+06+16）待 G2 评价；下一窗口 P1-09/10/17 已解锁（blocked_by 全部已验收：08+16 / 08+16 / 05+16）。
+- 旧验收记录未改动；仅追加本条。

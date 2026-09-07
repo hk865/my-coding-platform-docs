@@ -95,3 +95,11 @@ verification:
 - 相同 snapshot/baseline 输入产生相同 raw Delta；
 - Worker/Reviewer 无权修改 baseline 或把自己的 CompletionClaim 作为新 baseline；
 - 本票结束时不存在 RemediationTask、migration Gate 或 BaselineActivation side effect。
+
+## Implementation record（有限授权，2026-09-06 连续窗口；status 保持 proposed）
+
+- 证据：dev_docs/verification/p1-12-implementation-evidence.md（验收映射 + 集成裁决 4 条 + 欠账 3 条）。
+- 实测（产品根 4ecc517）：typecheck 0 errors；全量 121 files / 914 tests PASS / 0 skip；契约套件双适配器 9+9；restart 1/1；集成 3/3；validate-docs 13/13。
+- 冻结：WorkspaceReader.ReadPort、ArchitectureReconciler.InspectionPort、VerificationEngine.CodeGraphPort（v1）；契约 6 件；纯函数 computeArchitectureDelta / candidateProposalDigest。
+- 本票无 RemediationTask / migration Gate / BaselineActivation 副作用；P1-13（←12）已解锁。
+- 旧验收记录未改动；仅追加本条。

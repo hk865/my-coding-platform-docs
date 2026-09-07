@@ -111,3 +111,16 @@ verification:
 - remediation FAIL、BLOCKED 或 outcome_unknown 保留原 Finding 和所有历史 Evidence；
 - 验证通过后 Finding 以新 Evidence 标记 resolved，不删除原始 Delta；
 - ArchitectureBaseline active ref 在整个本票中保持不变。
+
+---
+
+## Implementation record（2026-09-07，integrator；Ticket 状态保持 proposed——由开发流程依据 Evidence 更新）
+
+- **验收**：产品根 **fbc365e**（= 三 lane 合并 + 套件断言对齐 a3641f0 + B 真实路径修订）；typecheck 0；全量 **154 files / 1083 tests PASS（0 skip）**；
+  双适配器同套件 9+9；真实 SQLite 集成/restart/evidence 各 1/1；writer 链（InMemory+SQLite reopen）3/3；validate-docs 13/13。
+- **证据**：dev_docs/verification/p1-13-implementation-evidence.md。
+- **范围**：第三 governance 类（ArchitectureEvolutionPolicy）首次消费（install 不自动激活、activation CAS、canonical 解析、allowlist+drift 判据）；
+  RemediationPlanPatch/Task/dedup（终态不占键）；唯一 Writer（P1-07 lease）与 Verification（修复后当前 revision + pinned policy）链复用；
+  ArchitectureBaseline active ref 全程不动。
+- **Gate**：G5（13+14）仍待 P1-14；本票验收后继续下一票。
+- **授权与连续性**：有限授权（2026-09-06 连续窗口）；本运行继续推进 P1-14；GitHub 推送仍需用户授权。

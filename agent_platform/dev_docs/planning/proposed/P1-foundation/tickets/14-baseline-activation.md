@@ -104,3 +104,12 @@ ArchitectureReconciler 先确认 P1-12 candidate proposal 的 source baseline �
 - 既有 Plan 保持其 pinned effective baseline，只有显式 PlanRebase/新 PlanRevision 才重新计算 Evidence applicability；
 - activation 不重写旧 FAIL、Finding、Decision 或 Evidence；
 - 控制台可以解释“谁授权、迁移证据是什么、哪些 Plan 尚未 rebase”。
+
+---
+
+## Implementation record（2026-09-07，integrator；Ticket 状态保持 proposed——由开发流程依据 Evidence 更新）
+
+- **验收**：产品根 **685bf34**；typecheck 0；全量 **164 files / 1142 tests PASS（0 skip）**；双适配器同套件 9+9；集成/restart/evidence 各 1/1；validate-docs 13/13。
+- **证据**：dev_docs/verification/p1-14-implementation-evidence.md；**G5（13+14）PASS**（g5-gate-evidence.md）。
+- **范围**：candidate 物化/决策/migration gate/激活编排（P1-02 activate 机制复用；STALE 不激活；无隐式 rebase；既有 Plan pin 不动；不重写旧工件）；3 个冻结端口。
+- **授权与连续性**：有限授权（2026-09-06 连续窗口）；继续推进最后一票 P1-15；GitHub 推送仍需用户授权。

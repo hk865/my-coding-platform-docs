@@ -96,3 +96,12 @@ verification:
 ## Verification
 
 以可重放协商 fixture 做确定性拒绝／幂等／版本测试，再对用户选定真实任务运行一次模型协作集成，保存本票声明的全部 output_artifacts。记录预算、人工决策次数与返工原因；fixture 不能替代真实任务集成 PASS。
+
+---
+
+## Implementation record（2026-09-07，integrator；Ticket 状态保持 proposed——由开发流程依据 Evidence 更新）
+
+- **验收**：产品根（P1-15 最终 main）；typecheck 0；全量 **174 files / 1193 tests PASS（0 skip / 0 fail）**；双适配器同套件 9+9；集成/restart/evidence 各 1/1；角色回流链 + 真实内核模型 e2e PASS；validate-docs 13/13。
+- **证据**：dev_docs/verification/p1-15-implementation-evidence.md；**G3（07+15）PASS**（g3-gate-evidence.md）；**MVP 评议**：dev_docs/verification/mvp-review.md。
+- **范围**：初始协商入口（歧义+≥2 选项+精确决定绑定）+ 显式有界协调策略（预算=1 恰一次返工；第二次拒绝+可见未解项）+ unified facts-first 状态视图 + 真实任务模型协作集成（本地 SSE 端点=能力降级证据）。
+- **授权与连续性**：有限授权完成；**P1-foundation 全部 17 票（P1-00..P1-17）验收完成，G1..G5 全部 PASS**；GitHub 推送仍需用户授权（本地 main 领先 origin 96 commits）。

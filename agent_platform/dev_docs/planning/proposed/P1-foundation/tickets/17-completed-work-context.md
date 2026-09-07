@@ -59,6 +59,14 @@ A 完成工作并归档，框架按 P1-05 归约 Goal；平台重启后，B 在�
 - 缺记录、超预算、跨 scope 和权限不足显式处理；必要材料缺失不能声称 ready。保留原始来源，工作完成不自动删除引用。
 - P1-05 的 required 集合与 Evidence 完成规则原样成立；历史检索不直接写完成状态。
 
+## Implementation record（有限授权，2026-09-06 连续窗口；status 保持 proposed）
+
+- 证据：dev_docs/verification/p1-17-implementation-evidence.md。
+- 实测（产品根 ee53869）：typecheck 0；全量 130 files / 947 tests PASS / 0 skip；双适配器 6+6；restart 1/1；集成 2/2。
+- 冻结：ContextCompiler.CompletedWorkContextPort（src/contracts/completed-work-context.ts，v1）；契约 CompletedWorkContextRequest/ExecutionMemorySelection。
+- 零新事件/聚合；零 ledger 写入（选材只读）；不完成其他票。
+- 旧验收记录未改动；仅追加本条。
+
 ## Verification
 
 构造完成任务与新的相关任务，覆盖重启、同模块多次工作、跨模块来源、陈旧前提、缺失正文及越权。精确选材与版本用确定性测试；实际语义继承效果在 P1-15 真实模型场景另验，不能仅靠模型声称记得。
