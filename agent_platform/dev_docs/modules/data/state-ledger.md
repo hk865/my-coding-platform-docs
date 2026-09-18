@@ -1,8 +1,11 @@
 # StateLedger Module：Goal 创建切片
 
+> 当前代码与接线评价见 [模块审计](../../../human/module-status.md) 的对应条目。本页保留职责、Interface 要求及明确标注的首切片约定；旧切片状态不能代替当前实现结论。
+
+
 ```yaml
 status: draft
-updated: 2026-09-05
+updated: 2026-09-11
 slice: 创建 Goal → 持久化 → 投影显示
 plane: Data
 ```
@@ -85,7 +88,7 @@ Adapter 的存储约束；只在对接时读取
 [`ReadModelIndex.Interface`](./read-model-index.md#interface)，不装载其 Implementation 或全局设计文档。
 ## P1-02 extension record：governance / plan 持久化
 
-2026-09-05 [P1-02](../../planning/proposed/P1-foundation/tickets/02-plan-revision-visible.md) 版本化扩展：新增 commitKind（governance-install / governance-activate / plan-revision），原子性（单事务）、CAS、幂等 replay、EventPage 单调与 cursor 语义不变；事件/snapshot/expected 对齐规则在 src/contracts/ledger-validation.ts，InMemory 与 SQLite 共用。
+2026-09-05 [P1-02](../../planning/proposed/P1-foundation/tickets/02-plan-revision-visible.md) 版本化扩展：新增 commitKind（governance-install / governance-activate / plan-revision），原子性（单事务）、CAS、幂等 replay、EventPage 单调与 cursor 语义不变；事件/snapshot/expected 对齐规则在 src/data/state-ledger/ledger-validation.ts，InMemory 与 SQLite 共用。
 
 ## P1-03 extension record：dispatch / run 持久化
 
@@ -96,3 +99,28 @@ Adapter 的存储约束；只在对接时读取
 ## P1-07 extension record：lease / integration / patch 持久化
 
 2026-09-06 [P1-07](../../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展：新增 workspace-read/write-lease-acquire/release、integration-record、patch-record 六个 commitKind；WorkspaceReadLease / WorkspaceWriteLease / WorkspaceWriteLeaseIndex / IntegrationResult / PatchRecord 聚合；Workspace 聚合 revision 由 ledger CAS 单调推进（patch 登记原子携带 N→N+1；显式 release 不推进）。
+## 当前源码边界（2026-09-11）
+
+task 工作绑定提交在同一事务中核对并占用 `(projectId, workspaceId, goalId, taskId)` 的唯一身份槽，事件、绑定快照与槽冲突不能部分成功。SQLite 旧库可能已有 WorkContextBinding 而没有 identity_claims 槽：提交在事务内检查这些旧快照，不能因槽表为空给同一任务另建身份。旧绑定与历史重复原样保留；新写入不能扩大重复。内存与 SQLite 使用同一身份键规则，Control 的先查守卫只负责可读拒绝，不替代事务约束。
+
+`src/data/state-ledger/in-memory-ledger.ts` 与 `src/data/state-ledger/sqlite-ledger.ts` 保持同一提交/读取契约。`src/data/state-ledger/governance-records.ts` 只解析治理引用与摘要，policy/fold 不放存储契约。`src/data/state-ledger/ledger-scope-catalog.ts` 实现 ScopeCatalogPort：按事件增量发现 Goal/QueryJob，再读当前 canonical 快照。它不冒充同一 cursor 下的业务投影视图；读取失败不静默返回不完整目录。
+
+跨 Module 的精确入口与失败/持久兼容规则见 [当前 Module 边界](../../interfaces/module-boundaries.md)。此源码映射不代替整体功能验收。
+
+VR-02 支持ReviewWork/ReviewResult/TaskReviewProtocol与对应原子提交，仍复用原快照/事件/幂等/outbox事务语义。`pendingDispatchIntents(limit, selection?)` 可按正式 `workKind` 在限流前筛选，两种后端行为一致；省略selection保留原查询，普通Dispatch显式选择ordinary，避免等待中的Reviewer占满扫描窗口。完整来源与语义资格仍由所属上层Module判断，Ledger只核对正式事务及版本；详见[独立审阅](../../interfaces/independent-review.md)，本批已按[VR-02验收](../../verification/2026-09-09-independent-review/acceptance.md)确认限定能力。
+
+CM-M06-001：alternativeReport只返回canonical有序候选，不代表正文可读或获胜。communication-successor-claim在同一事务复算候选完整前缀、精确授权/basis和版本守卫，再固定实际winner及admission。all旧调用保持兼容；无新增资格数据库或第二状态权威。 精确语义见[运行时协作](../../interfaces/runtime-collaboration.md)，M06 snap-01 已独立验收，准确边界见模块状态。
+
+
+CM-1B-001（实施中、未冻结验收）：StateLedger 的 memory capability 保存安装级 profile 与项目 collection、无正文审计及幂等回执；同事务执行 CAS、来源 guard 与规范折叠复核。旧领域事件与 bootstrap 保持隔离。 契约见[记忆维护与回应选材](../../interfaces/memory-maintenance.md)。
+
+
+## CM-1C-001 当前增量（未冻结）
+
+Memory/SQLite 在最终事务重算 Review 与投递结果，检查精确来源/正文/完整目录和 CAS。首次分配重核 Work/Run/outbox，防止命令与结果或当前权限不一致。持久回执优先，重复命令不重新应用。
+
+涉及本模块文件：`architecture-review-ledger.ts`、`ledger-validation.ts`、`in-memory-ledger.ts`、`sqlite-ledger.ts`。共享值与纯校验位于 Contracts 的 architecture-review.ts / architecture-review-values.ts / initial-work-assignment.ts；组合根 service、harness 和 UI 负责接线，不承接模块权威。Gate C 待独立判断。
+
+## M01 待办选择
+
+PendingDispatchSelection 新增可选 Project/Goal scope，仅为只读查询条件，不改变持久字段。两 adapter 共用 dispatch-selection 的筛选/排序：先核 pending、scope、工作种类、due/quarantine，再限量，保留 availableAt/pendingAt/完整引用的稳定顺序。SQLite 在查询层先过滤 outbox/pending/scope，避免把全部领域快照返回 JS；事务提交及最终守卫不变。

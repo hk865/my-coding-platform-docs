@@ -219,3 +219,12 @@ Command 与 Event 的 Goal identity 均为 `(projectId, aggregateType = "Goal", 
 ## P1-07 extension record：workspace lease / integration / patch 命令与事件
 
 2026-09-06 [P1-07](../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展（v1 既有语义不变）：acquireReadLease / acquireWriteLease / releaseWorkspaceLease / recordIntegrationResult / recordPatch 五命令、六个 commitKind（workspace-read-lease-acquire / workspace-read-lease-release / workspace-write-lease-acquire / workspace-write-lease-release / integration-record / patch-record）与六事件（WorkspaceReadLeaseGranted / WorkspaceReadLeaseReleased / WorkspaceWriteLeaseGranted / WorkspaceWriteLeaseReleased / IntegrationJoined / PatchRecorded）。可执行契约见产品代码 src/contracts/{workspace-lease,workspace-capability,integration,patch}.ts（产品代码根：/home/han001/projects/agents/agent_platform，IMPLEMENTATION-HANDOFF.md「P1-07 契约与存储语义（冻结）」）。
+
+## CM-1A-001 执行与通信事件增量
+
+RuntimeInputBound、ModelRequestAuthorized、ModelRequestEvidenceRecorded、ExecutionEntered、ExecutionRetryScheduled、DispatchDeferred、RunReconciled 与 SubscriptionCatchupAdvanced 纳入正式事件联合及两个投影。RuntimeInputBound 推进 Run；许可/attempt 仅写许可并以 Run 等版本作 CAS 守卫。ExecutionRetryScheduled 保存同一 Run/Attempt/outbox 的原子重排；RunReconciled 不重开 Run。通信隔离复用 CommunicationIntentSettled，专用 communication-intent-reconcile 提交仅允许可核对的隔离转换。精确字段、生产者、消费者与历史兼容见 [CM-1A-001 协议约束](../planning/active/collaboration-memory/CM-1A-001-PROTOCOL-CONSTRAINTS.md)。
+
+
+### ControlIntentReconciled（加法事件，schemaVersion 1）
+
+ReconcileControlIntent 仅允许system身份对既有取消意图请求归约，带expectedRevision及精确intentRef。control-intent-reconcile提交包含一条ControlIntentReconciled事件、一份下一版本ControlIntent快照，以及当前Intent/Run两个expectedVersions；不写Run、不产生outbox。事件payload为完整归约快照，记录Run引用、revision、outcome和时间。Ledger在原子提交位置重新计算并拒绝伪造或版本冲突。双投影推进意图状态与cursor而不增加ackCount；历史数据没有此事件仍能读取，在恢复时依据正式事实补归约。无事实变化返回unchanged，不伪造SafePointAcknowledged。

@@ -1,8 +1,11 @@
 # Agent Platform 开发地图
 
+> 当前实现状态见 [全模块审计](../../human/module-status.md)。本文件描述既有施工范围与阶段元数据；历史逐票 PASS 和 proposed 状态均不直接代表当前产品能力，实施授权以用户当前委托为准。
+
+
 ```yaml
 status: current
-updated: 2026-09-06
+updated: 2026-09-07
 scope: 从当前 P0 设计冻结到 P1 foundation MVP 证据链的唯一阶段导航
 active_phase: ./active/P0/DAG.md
 next_proposed_phase: ./proposed/P1-foundation/DAG.md
@@ -10,6 +13,8 @@ evaluation: ../evaluation/mvp-scenario.md
 ```
 
 ## 1. 如何使用这张地图
+
+2026-09-11用户确认的下一步产品方向见[通用角色模板与工具组合](../../PRODUCT.md#通用角色模板与工具组合)。后续设计应以模板、实际工具授权、Context消费和名片展示的纵向样例明确范围，并随样例验证真实模型表现；本条不新建已批准Ticket、不冻结长期记忆或通用A2A的施工顺序，现有阶段元数据仍描述原施工范围。
 
 本目录把长期架构依赖与临时开发先后分开：
 
@@ -49,6 +54,12 @@ evaluation: ../evaluation/mvp-scenario.md
 - 目标：从持久化 Goal 开始，以 Agent-sized 纵向切片交付 Plan、dispatch、Evidence、Goal 归约、换手、并行、人机协作与架构对账；
 - 发布评价：[MVP 场景](../evaluation/mvp-scenario.md)；
 - 激活条件：P0 用户审阅通过、产品/设计文档转为 `current`、首个仓库和技术栈由用户授权。
+
+## 2026-09-07 真实 Agent 接入与测试专项
+
+用户要求把 API 配置、coding-agent 接线与测试任务落入开发文档。新增 [真实 Agent 测试任务包](proposed/real-agent-acceptance/DAG.md)，含 RAT-00…08 的依赖、验收、验证与证据要求。该专项覆盖本地真实调用、4 canary、计划前探索/并发讨论、主动找 Bug、公开基准与综合 GUI 对照。RAT-08 增补八项多 Agent 共享项目协作/故障场景，并作为 RAT-07 的前置。
+
+所有新票为 proposed；此次是文档任务化，不调整 P0/P1 阶段、历史完成记录或 G1–G5。API 入口和真实 Runtime 缺失明确作为前置实现，测试适配器与 oracle 成绩不代表真实 Agent 通过。
 
 ## 4. 阶段关系
 

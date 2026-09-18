@@ -1,8 +1,11 @@
 # ReadModelIndex Module：Goal 创建切片
 
+> 当前代码与接线评价见 [模块审计](../../../human/module-status.md) 的对应条目。本页保留职责、Interface 要求及明确标注的首切片约定；旧切片状态不能代替当前实现结论。
+
+
 ```yaml
 status: draft
-updated: 2026-09-06
+updated: 2026-09-11
 slice: 创建 Goal → 持久化 → 投影显示
 plane: Data
 ```
@@ -45,7 +48,7 @@ projection storage、catch-up 和 rebuild。后续新增 View 不扩大调用者
   [Goal View Interface](../../interfaces/goal-view.md)；
 - catch-up/rebuild 只调用 [`StateLedger.events`](./state-ledger.md#interface)；
 - projection storage 是内部 Seam；
-- 不依赖 ControlEngine 或 HumanCollaboration Implementation。
+- 只读政策解释复用 ControlEngine 的 PolicyExplanationPort；不提交 Control 命令，不依赖 HumanCollaboration。
 
 ## Invariants
 
@@ -107,6 +110,59 @@ projection storage、catch-up 和 rebuild。后续新增 View 不扩大调用者
 
 2026-09-06 [P1-07](../../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展：advance 处理 6 个新 v1 事件（WorkspaceReadLeaseGranted/Released、WorkspaceWriteLeaseGranted/Released、IntegrationJoined、PatchRecorded），writerLease / integrationConflicts / workspacePatches 三视图（只展示）；isHandledEventType 与 handler 同 commit（KNOWN 同步）、未知事件仍整页停止；断言前先 advanceProjection。
 
+## P1-18 extension record：material-access 授权行
+
+2026-09-08 版本化扩展：advance 处理 `MaterialAccessGranted`，每个不可变授权产生一行（内存数组／SQLite `material_access_grant_rows`），新增 `materialAccessGrants(query)` 查询（projectId 必填，可再按 workspaceId、goalId、materialDigest、readerRunId 过滤，返回有界的最近记录集合）。
+
+该视图只供展示；宿主权限解析已切换到下述 materialAccessCandidates 精确查询。读者一致性、材料一致性、声明基线与签发者权威由 Vault 自己判定；视图本身不授权、不判断完成、不写状态。授权行跨重开保留，空索引重放同一事件得到相同行。
 ## Context 生命周期与协作扩展
 
 P1-16／17 投影工作接续和历史来源；P1-15 展示议题、待决与通知／刷新状态。报告文字不变成完成事实。 行为依据：[Context 生命周期](../../interfaces/context-lifecycle.md)、[运行时协作](../../interfaces/runtime-collaboration.md)、[人类交互](../../interfaces/human-design-status.md)。精确 schema 在对应消费者冻结，文档同步不表示已有实现。
+
+2026-09-08：内存与 SQLite completedWorkView 共同按当前计划的 TaskReduction satisfied 或 Goal COMPLETED 筛选；未知结束资格保守排除，重开结果一致。保留原始工作记录，不以 Run 结束或存在笔记代替正式完成。
+
+## RW-09 extension record：时间线的计划变更原因（2026-09-10）
+
+`TimelineEntry` 增加两个字段，两套后端同语义：`refs.planId`（这条 `plan_accepted` 讲的是哪一份计划）与可选的 `change`（`reason`／`actor`／`goalRevision`／`activePlanId`／`supersededPlanIds`）。
+
+为什么在投影里补：`PlanRevisionAccepted` 事件本身不带变更原因，原因在**同一个提交批次**的 `GoalRevisionRecorded` 事件里（`change.reason` 逐字落账：人的决定受理是 `user-decision-accepted`，ControlEngine 的自动受理是 `autonomous-rework:<proposalId>`）。投影按到达顺序折叠，`plan_accepted` 先到，因此 `applyP111` 在折叠 `GoalRevisionRecorded` 时按「目标 + 生效计划 id」回头把 `change` 写进已存在的条目——不新造条目、不改写 summary、不解析 id 形状。计划的**初始**受理没有 `GoalRevisionRecorded`，那条条目不带 `change`，含义是"这不是一次计划变更受理"，不是"原因未知"。
+
+消费方：工作台「动态」按 `change.actor.kind` 标注系统自动受理／人的决定，并把 `change.reason` 逐字显示；「计划变更」视图经 `/api/real/plan-changes/view` 消费既有的 `planChangeView`，不新增投影。两套读模型的一致性由 `tests/read-model/plan-change-timeline.test.ts` 对同一段事件逐字段比对。
+
+## 2026-09-09 材料授权边界修复
+
+materialAccessGrants(query) 保留最多 256 条的展示用途。新增 materialAccessCandidates({reader, material}) 供宿主解析：按完整 Run/QueryRun 身份及 contentType/digest/sizeBytes 返回全部精确候选，不能在权限和版本筛选前截断；不改变授权决定仍由 Vault 作出的职责。
+
+内存和 SQLite Adapter 同时实现，两个宿主均切到该查询。SQLite 在 SQL 中预筛项目／runId 后遍历并校验完整身份与材料；当前没有新的专用索引，大规模查询性能仍可优化，但不得用隐藏截断换取性能。重开／投影重建仍读取原有授权行，无存储迁移。
+## 当前源码边界（2026-09-11）
+
+GovernanceViewPort 的实现 `src/data/read-model-index/governance-view.ts` 按需读取已提交治理事件与 canonical active/revision，组织当前生效内容、操作者及缺口。它不另存 active 权威、不提交治理命令；app/governance 只委托查询并适配人类命令与回执。此前治理查询留在 Host 的例外已结束，原文保存在本次 history；不需要出现第二消费者才将查询归 Module。
+
+内存与SQLite实现继续消费同一已提交Event语义，给出明确scope/cursor。两者注入同一PolicyExplanationPort解释证据和变更，不复制Control算法，也不把解释改写为正式reduction。InitialPlanningView组织规划展示；原ScopeCatalog属于canonical目录发现，按StateLedger边界迁出。两种后端尚有重复投影/View规则，属于本Module内部维护债，不能说已全部消除。
+
+跨 Module 的精确入口与失败/持久兼容规则见 [当前 Module 边界](../../interfaces/module-boundaries.md)。此源码映射不代替整体功能验收。
+
+VR-02 的 `reviewer-projection.ts` 共享正式Work/Result/协议投影与解释材料，两种后端都展示独立Reviewer Run，并保留原TaskLease来源。Evidence解释调用Control同一纯Reviewer资格函数，采用新协议后旧satisfied缓存不能直接成为完成说明；投影无状态提交权。准确边界见[独立审阅](../../interfaces/independent-review.md)，本批已按[VR-02验收](../../verification/2026-09-09-independent-review/acceptance.md)确认限定能力；其余旧投影重复仍是模块内维护债。
+
+phase标签保留最后已提交的归约事件，不与协议采用原子刷新；adoption checkpoint未成功时，标签和已经失效的旧Reviewer资格解释可能暂不一致。当前资格仍需完整守卫，不能把旧标签当作完成或执行权限。
+
+CM-M06-001：communication-view.ts提供两种Ledger共用的事件重建投影，最多200页×1000；序列缺口、读取失败或未追上atLeastCursor返回not_ready。等待按Goal筛选，积压/最近80条时间线明确为当前工作区范围；正式运行终态复用isTerminalRuntimeEvent。 精确语义见[运行时协作](../../interfaces/runtime-collaboration.md)，M06 snap-01 已独立验收，准确边界见模块状态。
+
+
+CM-1B-001（实施中、未冻结验收）：MemoryViewIndex 只读 StateLedger 当前 collection 与 revision，不建立第二份记忆存储或推测已生效状态。 契约见[记忆维护与回应选材](../../interfaces/memory-maintenance.md)。
+
+
+## CM-1C-001 当前增量（未冻结）
+
+识别 ArchitectureReviewRecorded；canonical 读面按稳定事件边界拼接完整逐 Work 阶段。投递、绑定、provider 尝试、失败分别呈现，部分成功不能汇总全部完成。
+
+涉及本模块文件：`architecture-review-view.ts`、`read-model-index.ts`、`sqlite-read-model-index.ts`。共享值与纯校验位于 Contracts 的 architecture-review.ts / architecture-review-values.ts / initial-work-assignment.ts；组合根 service、harness 和 UI 负责接线，不承接模块权威。Gate C 待独立判断。
+
+2026-09-15 语义事实增量：决定三态与按域的待用户事项只读观察，包含有见证的返工预览；契约和未知边界见 [Query 语义可靠性](../../interfaces/query-semantic-reliability.md)。当前未冻结，真实质量与独立 I04 待验。
+
+
+## 事件页原子性与运行归属
+
+advance成功才同时公开该页视图、去重集合和cursor；任一处理器失败必须全部回滚，允许原页重试。内存适配器按该页实际访问条目暂存及写时隔离，保护先前返回的对象引用；SQLite仍采用事务回滚。新增投影容器必须纳入页事务及回滚测试，不能仅验证输入页后假设处理阶段不会失败。
+
+Task当前运行行只接受与其完整Run身份相同的Run事件。旧Run迟到事件可以保留自己的历史事实和cursor，但不能覆盖新Run的当前状态、Attempt或输出。独立B1/B2复现和修复验证见产品 deterministic-repair-37；同快照最终验收尚未完成。

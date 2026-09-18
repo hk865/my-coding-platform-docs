@@ -98,6 +98,22 @@ Module 的 Interface 所在、允许替换行为而不修改调用者的位置�
 **Decision**:
 对目标、架构、策略或例外作出的有权限、可追溯选择。
 
+**ArchitectureReview**:
+特定工作范围中的架构审阅记录。其记录集合与当前待用户处理事项、项目基线激活历史是不同集合。
+_Avoid_: 未限定范围的“人类架构决定”
+
+**AcceptedProposal / SelectedCandidate / ActivatedBaseline**:
+分别指提案接受、明确候选选择、基线激活三个阶段的事实；一个阶段的记录不替代另一个阶段的记录。
+
+**CreatedBy / ProposedBy / DecidedBy / ActivatedBy**:
+分别指内容作者、提案者、正式决定者、基线激活者的记录关系。主体相同不使关系相同；安装者或激活者不能代替未知的内容作者。
+
+**PendingHumanAction**:
+在指定范围与观察时点仍等待用户处理的事项。当前待处理集合为空不表示没有历史决定或激活行为。
+
+**FactObservation**:
+带对象、关系、覆盖范围、版本、观察时间与权威来源的事实观察。ready-empty 只表示声明集合在该观察范围内为空；not_found 只表示指定对象未找到；unavailable、failed、stale 分别表示不可读取、观察失败、观察过期，均不等于不存在。观察定义本身不是事实记录。
+
 ## 三类图
 
 **ModuleDependencyDAG**:

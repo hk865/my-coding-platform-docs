@@ -50,3 +50,38 @@ HumanCollaboration 组合一个 scoped presentation：
 ## 2026-09-06 扩展验证
 
 跨包接口冲突在测试通过或尚未测试时上报；拒绝／延后不实施拟议变更；旧决定被拒绝；授权内契约变化仍主动通知且不重复通知；决定后的全部受影响工作可追溯至材料刷新／接续结果。Context 事件来源见 [生命周期契约](context-lifecycle.md)。
+
+## 已实现的本地 GUI 切片
+
+2026-09-08 的候选验收导入、文件引用和稳定阅读遵循[本地 GUI 接口](local-gui-verification.md)。其[单题复验证据](../archive/2026-09-08-verification-history/2026-09-08-ui-workflow-repair.md)只覆盖该有界切片，不表示 P1-15 整体完成或自动评分编排已接入。
+
+## CM-1C 候选来源兼容扩展（实施中）
+
+`ArchitectureCandidateProposalV1` 的来源二选一：机械差异使用原 `selectedDeltaRef`；报告/方案选择使用 `selectedBriefRef`，此时 `selectedDeltaRef` 必须为 null。Brief 引用纳入提案摘要，引用精确 Project/Workspace/briefId 的不可变 revision 1；Control 核对 Plan、baseline pin 与所选 optionId，Ledger 提交携带 Brief revision 守卫。缺失、跨 scope、混用两种来源或不存在的选项均拒绝。旧机械候选不增加空字段，原摘要保持兼容。Brief 只证明方案来源，不赋予接受或激活权限。
+
+候选物化由 Control 在最终提交中守卫已检查的 ProjectArchitectureBaselineActive 版本；检查与提交之间基线移动会产生 revision_conflict。已提交命令先走持久幂等判定，基线后来移动不抹掉原回执；改变命令内容仍冲突。旧 Ledger 提交形状继续兼容读取/既有调用，本轮真实 Control 新物化一律携带该守卫。人的四种决定、完整影响集与逐 Work 回流仍在 CM-1C 实施，不由此局部扩展推导通过。
+
+
+## CM-1C-001：人的架构取舍展示（实施中）
+
+ArchitectureReview 卡片显示报告 Run/Plan、来源 Brief、当前基线和提案版本/摘要、原始冲突、方案建议、影响以及暂停/独立部分。接受/拒绝/延后固定本版本决定；修改产生新提案后重新待决。所有提交携带 expectedRevision 与 proposalDigest；网络结果未知时保留同一 requestId 和输入重试，不能把新输入混进旧请求。偏好维护不成为决定或激活授权。
+
+读侧逐 Work 区分决定已记录、投递、后继接纳、当前输入绑定、provider 尝试及失败；只在完整目标集满足相应阶段时汇总。provider 尝试不等于模型回应正确或任务完成。读取跨越新事件时重取一致观察边界，不能用旧调用证据与新终态合成假失败。当前目标集上界 64，超界显式拒绝，不静默漏掉 Work。四分支浏览器与真实模型样例证据分列，Gate C 不由类型/回归自动成立。
+
+## 执行反馈选项的当前适用性
+
+整答 freshness 与人工选择的适用性分开观察。协调回答发布后，待处理事项等动态事实可能变化；历史回答标签本身既不授权选择，也不能代替该选项的版本检查。
+
+`/api/real/feedback/options` 是 scoped、带本地会话凭证的只读入口，返回精确 AnswerRef、scope、observedAt、可选择的原 optionId 与拒绝原因；不记录提案或决定，不启动模型。ContextCompiler 复用正式选择所用的 Ledger/来源读取：正式 answered Job/Run 绑定、Goal/Workspace/Plan、原选项、实际 workspace source revision，以及已落账决定的精确幂等身份。缺失或不适用返回空可选集，不猜测授权。
+
+UI 保留整答历史标记，按独立读取结果启用选项。读结果不构成租约；点击仍由原选择入口重新核验并交 Control 正式落账。作用域/Answer 切换时丢弃旧读取与迟到选择回执；拒绝后可重新检查。来源在读取后、提交前改变必须拒绝；需要基于新来源重新取得有效选项，不能靠还原文本或取消 stale 标签绕过来源版本检查。
+
+## 2026-09-17 状态概览与当前适用性分离（PERF41）
+
+工作台刷新使用 `GET /api/state?view=overview`。它显示已落账的 Goal、任务、回答及验收记录，返回 `applicability.status=not_checked` 和观察时间；不能由历史完成或 stale=false 推导当前源码已验收。旧 `/api/state` 未指定 view 的强检查行为保留用于兼容。
+
+用户可对指定 `projectId/workspaceId/goalId/queryJobId/answerId` 请求 `GET /api/query-applicability`。检查绑定该回答的 Run，不得使用同 Query 的另一 Run 代替。返回观察时间、投影游标与 current/not_current/stale/unavailable：current 仅表示本次来源与版本观察匹配，不证明自然语言语义或未来持续有效，也不授予执行权限；not_current 表示未确认综合适用性，不必然表示某个来源变化；stale 表示读取期间回答变化；unavailable 表示当前无法检查指定对象。传输失败单独显示失败。
+
+页面概览不自动对每份历史回答发起强检查。手动适用性读取独立于状态/命令串行队列；切换 scope/回答或离开页面取消请求，旧结果不得显示为新回答的结果。HTTP取消沿只读事实链传递，来源遍历在安全检查点退出并释放句柄；不能承诺中断尚未返回的操作系统I/O。取消只读请求不得撤销业务提交。
+
+模型选材、引用访问、发布、执行和正式接纳仍使用既有权限、版本和来源复核；不将概览观察注入强事实摘要，不以仅journal版本代替来源见证。本次不改变探索来源的完整工作区范围，不引入跨请求有效性缓存。

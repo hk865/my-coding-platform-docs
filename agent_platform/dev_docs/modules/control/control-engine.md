@@ -1,17 +1,20 @@
-# ControlEngine Module：Goal 创建切片
+# ControlEngine Module
+
+> 当前代码与接线评价见 [模块审计](../../../human/module-status.md) 的对应条目。本页保留职责、Interface 要求及明确标注的首切片约定；旧切片状态不能代替当前实现结论。
+
 
 ```yaml
 status: draft
-updated: 2026-09-06
+updated: 2026-09-11
 slice: 创建 Goal → 持久化 → 投影显示
 plane: Control
 ```
 
 ## Purpose
 
-2026-09-05 [设计复核](../../design/human-framework-role-review.md)：当前仅展开 CreateGoal，角色提案、协作决定及状态推进路径需复核后扩展。
+ControlEngine 是 canonical 状态转换与授权的唯一受理方。当前入口覆盖目标、计划、证据、角色、派发事实与返工等正式命令；精确当前责任见下方“当前源码边界”。2026-09-05 [设计复核](../../design/human-framework-role-review.md) 及下方 CreateGoal 局部约定描述首切片，不限制当前入口集合。
 
-`ControlEngine` 是 canonical state 的唯一 transition authority。本切片只接受 `CreateGoal`，执行领域
+`ControlEngine` 是 canonical state 的唯一 transition authority。首个创建切片接受 `CreateGoal`，执行领域
 guard，并把 Domain Event、Goal snapshot 与幂等结果作为一个原子提交交给 `StateLedger`。
 
 ## Interface
@@ -105,25 +108,53 @@ bootstrap(command: WorkspaceBootstrapCommand): Promise<WorkspaceBootstrapReceipt
 - 契约类型见 [Command/Event Interface](../../interfaces/command-event.md) 与 [StateLedger Interface](../../interfaces/state-ledger.md) 的 P1-00 扩展记录。
 ## P1-04 extension record：submitEvidence / reduceTask
 
-2026-09-05 [P1-04](../../planning/proposed/P1-foundation/tickets/04-evidence-satisfies-task.md) 版本化扩展：ControlEngine 接口新增 `submitEvidence`、`reduceTask`（submit/bootstrap 形状不变）。实现分派到两个独立入口文件（src/control/evidence-intake.ts、src/control/task-reducer.ts），ControlEngineImpl 仅委托；Evidence 不可变追加/完整幂等/CAS、纯函数 TaskSatisfied 公式与零写入语义见 HANDOFF「P1-04 契约与存储语义（冻结）」；**控制是唯一写 TaskReduction phase 者，本票不归约 Goal（P1-05）**。
+2026-09-05 [P1-04](../../planning/proposed/P1-foundation/tickets/04-evidence-satisfies-task.md) 版本化扩展：ControlEngine 接口新增 `submitEvidence`、`reduceTask`（submit/bootstrap 形状不变）。实现分派到两个独立入口文件（src/control/control-engine/evidence-intake.ts、src/control/control-engine/task-reducer.ts），ControlEngineImpl 仅委托；Evidence 不可变追加/完整幂等/CAS、纯函数 TaskSatisfied 公式与零写入语义见 HANDOFF「P1-04 契约与存储语义（冻结）」；**控制是唯一写 TaskReduction phase 者，本票不归约 Goal（P1-05）**。
 ## P1-02 extension record：install / activate / applyPlan
 
 2026-09-05 [P1-02](../../planning/proposed/P1-foundation/tickets/02-plan-revision-visible.md) 版本化扩展：`submit`/`bootstrap` 形状不变；ControlEngine 接口新增 `install`、`activate`、`applyPlan`。
-实现分派到三个独立入口文件（src/control/governance-install.ts、governance-activate.ts、plan-acceptance.ts），ControlEngineImpl 仅做委托；pre-CAS 引用解析（目标已安装、active refs 解析）、guard 顺序与零写入语义见 HANDOFF 冻结清单。HumanCollaboration 面向用户的 Plan 提交入口留给状态台/完整协作票（P1-08/15），本票经 ControlEngine 直接消费票据命令。
+实现分派到三个独立入口文件（src/control/control-engine/governance-install.ts、governance-activate.ts、plan-acceptance.ts），ControlEngineImpl 仅做委托；pre-CAS 引用解析（目标已安装、active refs 解析）、guard 顺序与零写入语义见 HANDOFF 冻结清单。HumanCollaboration 面向用户的 Plan 提交入口留给状态台/完整协作票（P1-08/15），本票经 ControlEngine 直接消费票据命令。
 
 ## P1-03 extension record：dispatch / run 入口
 
-2026-09-05 [P1-03](../../planning/proposed/P1-foundation/tickets/03-fake-run-visible.md) 版本化扩展：接口新增 dispatchReadiness、claimTask、startRun、runFact（submit/bootstrap 形状不变）。实现分派到 src/control/{readiness,claim,start-run,run-facts}.ts，ControlEngineImpl 仅委托；readiness 零写、claim 单次 CAS 唯一领取、durable outbox 与事件同原子提交；eligibility 的 depends_on 满足以 TaskReduction live phase 为准（dispatch-facts.loadLivePlan，P1-07 起；签名不变）。
+2026-09-05 [P1-03](../../planning/proposed/P1-foundation/tickets/03-fake-run-visible.md) 版本化扩展：接口新增 dispatchReadiness、claimTask、startRun、runFact（submit/bootstrap 形状不变）。实现分派到 src/control/control-engine/{readiness,claim,start-run,run-facts}.ts，ControlEngineImpl 仅委托；readiness 零写、claim 单次 CAS 唯一领取、durable outbox 与事件同原子提交；eligibility 的 depends_on 满足以 TaskReduction live phase 为准（dispatch-facts.loadLivePlan，P1-07 起；签名不变）。
 ## P1-05 extension record：reduceGoal / goal phase 查询
 
-2026-09-06 [P1-05](../../planning/proposed/P1-foundation/tickets/05-goal-phase-reduction.md) 版本化扩展：接口新增 reduceGoal 与 goal phase 查询（src/control/goal-reducer.ts 独立入口，ControlEngineImpl 委托）；GoalPhaseUpdated 事件与 GoalCompletionGuard 非空检查见 HANDOFF「P1-05 契约与存储语义（冻结）」与 [completion-policy](../../interfaces/completion-policy.md)。
+2026-09-06 [P1-05](../../planning/proposed/P1-foundation/tickets/05-goal-phase-reduction.md) 版本化扩展：接口新增 reduceGoal 与 goal phase 查询（src/control/control-engine/goal-reducer.ts 独立入口，ControlEngineImpl 委托）；GoalPhaseUpdated 事件与 GoalCompletionGuard 非空检查见 HANDOFF「P1-05 契约与存储语义（冻结）」与 [completion-policy](../../interfaces/completion-policy.md)。
 ## P1-06 extension record：recordHandoff / claimReplacement
 
-2026-09-06 [P1-06](../../planning/proposed/P1-foundation/tickets/06-handoff-a-to-b.md) 版本化扩展：接口新增 recordHandoff、claimReplacement（src/control/handoff.ts、replacement-claim.ts）；旧 lease/迟到结果守卫与 replacement CAS 见 HANDOFF「P1-06 契约与存储语义（冻结）」。
+2026-09-06 [P1-06](../../planning/proposed/P1-foundation/tickets/06-handoff-a-to-b.md) 版本化扩展：接口新增 recordHandoff、claimReplacement（src/control/control-engine/handoff.ts、replacement-claim.ts）；旧 lease/迟到结果守卫与 replacement CAS 见 HANDOFF「P1-06 契约与存储语义（冻结）」。
 ## P1-07 extension record：lease / integration / patch 入口
 
-2026-09-06 [P1-07](../../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展：接口新增 acquireReadLease、acquireWriteLease、releaseWorkspaceLease、recordIntegrationResult、recordPatch（src/control/{workspace-lease,integration-join,patch-record}.ts）；不变量 #7 唯一 Writer = WorkspaceWriteLeaseIndex CAS；细节见 HANDOFF「P1-07 契约与存储语义（冻结）」。
+2026-09-06 [P1-07](../../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展：接口新增 acquireReadLease、acquireWriteLease、releaseWorkspaceLease、recordIntegrationResult、recordPatch（src/control/control-engine/{workspace-lease,integration-join,patch-record}.ts）；不变量 #7 唯一 Writer = WorkspaceWriteLeaseIndex CAS；细节见 HANDOFF「P1-07 契约与存储语义（冻结）」。
 
 ## Context 生命周期与协作扩展
 
 P1-16／17 保存工作关联与记录受理事实；P1-15 校验议题、分工与决定路由。语义分析由正式工作请求完成，reducer 不调用模型。 行为依据：[Context 生命周期](../../interfaces/context-lifecycle.md)、[运行时协作](../../interfaces/runtime-collaboration.md)、[人类交互](../../interfaces/human-design-status.md)。精确 schema 在对应消费者冻结，文档同步不表示已有实现。
+## 当前源码边界（2026-09-11）
+
+`ControlReworkDisposition.projectIssues` 是当前义务处置的只读解释入口：读取当前 Plan 的义务承担者及适用的正式 Evidence，复用已有来源、版本与独立审阅资格政策。Verification 的原失败材料与当前处置状态分开；本地 PASS、未接纳 Reviewer decision、过期 Evidence 不能抑制未处理返工。读取中 canonical 版本移动返回 unknown，不提交状态。正式返工受理仍由 acceptReworkProposal 与既有计划变更命令执行。
+
+任务工作身份由 bindWorkContext 的权威解析守卫与 Ledger 提交时的唯一性约束共同保证，不依赖调用方先查。历史重复绑定保留可追溯，不据新规则删除或改名；旧库提交兼容见 StateLedger Module。
+
+`src/control/control-engine/control-engine.ts` 组合各正式处理器。`control/policies` 持有完成/资格/来源/租约算法、证据冲突与返工去重政策，`control/records` 构造正式 snapshot/event；`contracts/commands` 只接受显式输入构造命令。ConfiguredWorkspaceCapabilityPolicy 用显式支持配置与 envelope 权限求交集，不回调 Runtime；PolicyExplanationPort 给 ReadModel 无状态解释，不具有状态提交权。生产逻辑不能从测试 fixture 取得默认 scope 或政策。
+
+跨 Module 的精确入口与失败/持久兼容规则见 [当前 Module 边界](../../interfaces/module-boundaries.md)。此源码映射不代替整体功能验收。
+
+VR-02 新增 `reviewer-work.ts` 的受限生命周期/输出绑定端口，正式 TaskReviewProtocol、ReviewWork、独立 Run/Attempt/outbox 与分组 ReviewResult/Evidence 均由 Control 重核后原子提交。`policies/reviewer-evidence.ts` 复用无状态资格函数供 reducer 和 ReadModel 解释；新协议不接受普通 verdict/observation 冒充 Reviewer，也不采信旧 satisfied 缓存，不改原 TaskLease 或旧 Plan/Evidence。准确接口见[独立审阅](../../interfaces/independent-review.md)；本批已按[VR-02验收](../../verification/2026-09-09-independent-review/acceptance.md)确认限定能力。
+
+CM-M06-001：any准入只读取Host已完成且本次调用隔离的验读观察，不调用Context/Vault。当前Work/参与/角色权限仍由Control核对，观察前缀和实际赢家与admission同事务记录；调用方token不是verdict，不进入稳定命令指纹。 精确语义见[运行时协作](../../interfaces/runtime-collaboration.md)，M06 snap-01 已独立验收，准确边界见模块状态。
+
+
+CM-1B-001（实施中、未冻结验收）：Control 负责明确人的记忆维护准入、来源校验与版本化折叠，构造带来源 guard 的提交；不从模型候选自动写入。 契约见[记忆维护与回应选材](../../interfaces/memory-maintenance.md)。
+
+
+## CM-1C-001 当前增量（未冻结）
+
+归约 ArchitectureReview 的打开/修改/最终决定，固定完整 Work 集，修改产生新提案；最终决定复用 ArchitectureChangeDecision。initial-participation-start 在原有专用参与校验之外校验正式首次派发来源。
+
+涉及本模块文件：`architecture-review.ts`、`coordination.ts`。共享值与纯校验位于 Contracts 的 architecture-review.ts / architecture-review-values.ts / initial-work-assignment.ts；组合根 service、harness 和 UI 负责接线，不承接模块权威。Gate C 待独立判断。
+
+
+## 取消意图的终态归约
+
+reconcileControlIntent 是消费已持久Run事实的系统入口，不是Runtime控制信号。它验证完整scope、当前Intent和Run版本，生成ControlIntentReconciled及下一Intent快照；Run/Intent双CAS由Ledger再次执行。正式取消、确定的非取消终态、unknown分别保留applied/rejected/outcome_unknown，未发生变化则不写入。它不生成安全点ack、Task/Goal完成或新执行许可。正常drive与恢复接线按[运行时协作](../../interfaces/runtime-collaboration.md)执行；旧数据库无需补写假Runtime回执。

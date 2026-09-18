@@ -2,13 +2,28 @@
 
 ```yaml
 status: draft
-updated: 2026-09-06
+updated: 2026-09-11
 scope: Plane、Module registry、长期依赖与全局不变量
 ```
 
 本文是低分辨率地图。Module 内部机制、字段和状态转换只存在于对应 Module 或 Interface 文档。
 
+当前源码入口、行为归属与持久兼容边界见 [Module 边界](dev_docs/interfaces/module-boundaries.md)。本轮保留 12 Module，梳理现有实现及生产调用方；该文档与结构检查不代表完整自治产品已完成。
+
+当前实现另见 [12 Module 当前状态](human/module-status.md)。本页的模块关系表达设计职责，不能据 `planned/draft` 或旧切片说明推断当前无代码，也不能据已有 Interface 推断真实链路已完成；设计与实际依赖差异见该页工程审计。
+
 2026-09-05：统一界面、参与式需求／架构建立和规划／集成—执行角色正在 [重新审阅](dev_docs/design/human-framework-role-review.md)。下列 Module 与 Interface 保留为候选，尚未证明覆盖修订后的完整产品承诺。
+
+## 本次责任收口（2026-09-11）
+
+保持下列 12 Module 和 ModuleDependencyDAG。用户已选择组合根传递验证问题材料：Verification 组织验证事实与原始问题，组合根把带来源材料交 Dispatch，Control 复核当前计划的义务承担者及正式 Evidence 资格。Dispatch 不持有 Verification 回调。
+
+- ContextCompiler 提供可归属的运行产出材料，WorkspaceReader 负责底层源码读取；Verification 解释声明性产出见证，Control 保有正式完成权威。
+- ReadModelIndex 组织治理与角色矩阵查询，应用只组合依赖和适配交互；只读扫描仍需报告来源和上限缺口。
+- Control 解析连贯工作身份；PlanCompiler 的影响清单只引用该身份。StateLedger 在原子提交内保证唯一性，不能仅依靠调用者先查。旧冲突事实保留并明确拒绝。
+- 计划换版不清除失败义务；证据历史失效与义务已经处置分别报告。未知归属不报告为已处置。
+
+[用户来源及替代关系](dev_docs/decisions/0003-rework-role-spec-architecture-reconciliation.md)与[偏差及实测证据](dev_docs/verification/2026-09-11-architecture-convergence/summary.md)是本次审阅入口；能力缺口见[唯一当前状态](human/module-status.md)。本节落实已有责任及本次明确选择，不新增模块、状态权威或完成语义。
 
 ## Plane
 
@@ -184,16 +199,20 @@ flowchart LR
   HumanCollaboration --> ControlEngine
   HumanCollaboration --> ReadModelIndex
   HumanCollaboration --> DispatchEngine
+  HumanCollaboration --> ContextCompiler
+  HumanCollaboration --> VerificationEngine
+  HumanCollaboration --> ArtifactVault
 
   PlanCompiler --> ContextCompiler
   PlanCompiler --> ControlEngine
-  PlanCompiler --> ArtifactVault
   ControlEngine --> StateLedger
 
   DispatchEngine --> ControlEngine
   DispatchEngine --> ContextCompiler
   DispatchEngine --> WorkerRuntime
   DispatchEngine --> ArtifactVault
+  DispatchEngine --> StateLedger
+  DispatchEngine --> PlanCompiler
 
   VerificationEngine --> ControlEngine
   VerificationEngine --> ContextCompiler
@@ -208,6 +227,14 @@ flowchart LR
   ContextCompiler --> ReadModelIndex
   ContextCompiler --> WorkspaceReader
   ReadModelIndex --> StateLedger
+  ReadModelIndex --> ControlEngine
+
+  WorkerRuntime --> ContextCompiler
+  WorkerRuntime --> WorkspaceReader
+  WorkerRuntime --> ArtifactVault
+  ArtifactVault --> StateLedger
+  ArtifactVault --> ReadModelIndex
+  ArtifactVault --> WorkspaceReader
 
   CodingAgentAdapter -.implements.-> WorkerRuntime
   FakeRuntimeAdapter -.implements.-> WorkerRuntime
@@ -222,10 +249,17 @@ flowchart LR
 | 调用者 → 被调用者 | 消费的 Interface 与原因 |
 | --- | --- |
 | HumanCollaboration → DispatchEngine | 读取可用的公开运行快照；UI 不直接依赖内核运行细节 |
-| PlanCompiler → ControlEngine / ArtifactVault | 提交协调工作与提案、读取结果；模型运行通过正式派发路径完成 |
+| PlanCompiler → ControlEngine / ContextCompiler | 提交协调工作与提案、经 Context 读取材料与结果；模型运行通过正式派发路径完成，不直接打开 Vault 正文 |
 | DispatchEngine → ArtifactVault | 打开已编译 Context、保存运行报告／交接正文，回交持久引用 |
 | ArchitectureReconciler → ContextCompiler | 获取相同版本的规范、代码关系和证据以做对账 |
 | ContextCompiler → WorkspaceReader | 按显式 Workspace 版本读源码／Git／可用代码索引；这些来源不是 Ledger 事件或 Vault 产物的替代品 |
+| DispatchEngine → StateLedger | 只读 canonical Run/outbox/Goal，用于恢复和派发前核对；正式写入仍只交 ControlEngine |
+| DispatchEngine → PlanCompiler | 人工单任务执行先请求已授权的人工计划；派发不自行构造任务图 |
+| ReadModelIndex → ControlEngine | PolicyExplanationPort 复用无状态证据/变更解释；不提交命令、不归约正式状态 |
+| HumanCollaboration → ContextCompiler / VerificationEngine / ArtifactVault | 探索取材、报告资格和审阅正文持久化；交互层不解析 canonical 状态或运行轨迹来裁决完成 |
+| WorkerRuntime → ContextCompiler / WorkspaceReader | 消费已绑定输入与受限来源工具；不持有全局规划循环 |
+| WorkerRuntime → ArtifactVault | 保存公开观察journal；Context独立读取已经落盘的记录，不调用活Runtime来取得材料 |
+| ArtifactVault → StateLedger / ReadModelIndex / WorkspaceReader | 找到候选授权后复核canonical状态、撤销与来源适用性；WorkspaceReader只返回原生来源，绑定图正文由Context保存Vault以避免反向环 |
 
 角色绑定与消息元数据仍由 ControlEngine／StateLedger 管理；轨迹正文和提示由 ArtifactVault 保存，ReadModelIndex 投影其已提交引用。它们改变契约内容，但不需要新增 RoleManager 或 MemoryStore。WorkspaceReader 则隐藏工作区读取、路径约束与索引版本差异，具有真实的独立读 Interface；没有 CodeGraph 时返回能力缺口，不能编造关系。
 
@@ -252,7 +286,7 @@ Integration Gate 汇合，不能把首次集成推迟到产品末尾。
 8. GateTask 参与完成归约；只有显式 Runtime dependency 才阻塞调度。
 9. 可激活 Plan 的 required executable Task、active required GoalGateTask、required AcceptanceObligation 与 required VerificationRequirement 集合都非空；空集合不能证明完成。
 10. Workspace bootstrap 只从版本化 source 建立 Project/Workspace identity 与 manifest，不顺带创建治理 revision 或 Project active governance ref。
-11. CompletionPolicy、ArchitectureBaseline 与 ArchitectureEvolutionPolicy 只在存在首个消费者的切片中，由显式版本化 source 经 install/activation contract 建立；local fixture 必须走同一正式路径，revision 持久且不可变，Project active ref 可审计，不存在内置默认值。
+11. 五种治理种类（CompletionPolicy、ArchitectureBaseline、CoordinationPolicy、ArchitectureEvolutionPolicy、RoleSpecRevision）只在存在首个消费者的切片中，由显式版本化 source 经 install/activation contract 建立；local fixture 必须走同一正式路径，revision 持久且不可变，Project active ref 可审计，不存在内置默认值。
 12. PlanRevision 在接受时固定解析出的 ArchitectureBaseline 与 CompletionPolicy revision；Project 默认 ref 后续移动不改写既有 Plan。
 13. ArchitectureBaseline revision 不可改写；candidate 的 source ref 必须仍等于 Project 当前默认 ref，才能经显式 Decision、migration Gate 与 CAS activation 演进；否则必须基于新默认 ref 重新提案。
 14. 归档文档永远不是当前状态来源。

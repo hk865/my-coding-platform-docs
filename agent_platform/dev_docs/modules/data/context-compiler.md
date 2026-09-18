@@ -1,12 +1,17 @@
 # ContextCompiler Module
 
+> 当前代码与接线评价见 [模块审计](../../../human/module-status.md) 的对应条目。本页保留职责、Interface 要求及明确标注的首切片约定；旧切片状态不能代替当前实现结论。
+
+
 ```yaml
 status: draft
-updated: 2026-09-06
+updated: 2026-09-11
 plane: Data
 ```
 
 ## Purpose
+
+执行反馈增量：`execution-feedback-context.ts` 从持久公开观察编制带原作者的报告；`feedback-materials.ts` 为正式关联的同工作后继 Run 选择调查回答，经来源见证、当前源码和精确 Vault 授权重组，输出到既有 runtime rules/manifest。Context 不签授权、不启动模型、不把调查结果当 Evidence。契约见[运行时协作](../../interfaces/runtime-collaboration.md#2026-09-11-定向执行反馈增量)。
 
 按已接受任务与角色选取有界、适用的工作材料，返回可审计来源清单。
 
@@ -33,3 +38,54 @@ StateLedger、ReadModelIndex、ArtifactVault、WorkspaceReader。长期调用关
 ## Context 生命周期与协作扩展
 
 P1-16 编译关键理由与前沿；P1-17 按工作／模块／版本选取已完成历史，输出缺失与适用性，不整体重放 transcript。 行为依据：[Context 生命周期](../../interfaces/context-lifecycle.md)、[运行时协作](../../interfaces/runtime-collaboration.md)、[人类交互](../../interfaces/human-design-status.md)。精确 schema 在对应消费者冻结，文档同步不表示已有实现。
+
+2026-09-08 局部修复：WorkContext 清单对应实际筛选结果；CompletedWork 从账本保留理由与来源版本，比较记录版本并核对 scope，字节数对应存储正文。行为边界以 [Context 生命周期](../../interfaces/context-lifecycle.md) 为准；角色自动选材／补料仍未接通。
+
+
+## 2026-09-09 选材与容量扩展
+
+探索消费者的选择实现已从应用移入 `src/data/context-compiler/exploration-context-compiler.ts`。`prerequisites` 供请求前置拒绝与执行前选择共用；`select` 核对正式前驱满足、PASS 审阅、Evidence、Plan/Workspace 和可信 sourcePin，返回精确材料需求；Dispatch 签发授权后调用 `assemble`。后者以消费者身份从 Vault 读取报告清单、分块及操作者审阅，核对摘要、原生产者和版本，形成实际输入。Context 不调用 Control、不签授权、不启动模型。该两阶段接口是现有 ContextCompiler 的探索扩展，不新增设计 Module。
+
+material-selection 仅接收已通过宿主权限/版本复核的候选，区分当前规则、历史解释、stale/forbidden/unknown。按明确消费者职责和主题排序，先纳入必需材料；同 ruleKey 的当前规则冲突、必需正文缺失或超容量返回 needs_material。清单逐项保存选择/排除理由、来源版本、权限依据、摘要/字节/Token 计量；历史内容不能满足当前必需义务，不静默裁剪。
+
+RuntimeContext 的显式规则已消费该选择器并将清单放入实际输入。其他职责的排序定义存在，但秘书/规划/Reviewer 等真实角色尚未接通，不能称为全部消费者完成。最终 ModelRequest（含工具/历史）由 ModelBudget 再次计量并预留响应空间，调用前容量拒绝。可注入模型计量器；当前真实 provider 尚未配置对应 tokenizer，默认值明确为 conservative_utf8_estimate，与 provider 实际上报用量分开，不把字节估算称为准确 Token。
+## 当前源码边界（2026-09-11）
+
+VerificationContextPort 的运行产出材料由 `run-output-materials.ts` 提供：从 canonical 记录及已提交事件查找可归属到当前 Run 的 ReviewWork 输出、PatchRecord、IntegrationResult 与 ExecutionNote，范围/版本不一致及读取不完整明确返回 unavailable。Verification 决定如何记录产出见证，Control 决定正式 Evidence 与义务处置；Context 不归约状态。
+
+WorkRunMaterialCompiler 保留工作/历史/角色必读材料的有界组织；code 材料仅经窄读取端口取得，原生列举、读取及拒绝路径由 WorkspaceReader 的 role-source-reader/denied-prefixes 管理。材料选择、权限、版本、缺口与最终 manifest 对齐的要求不变。
+
+IG09 普通硬依赖的正文由 `ordinary-predecessor-materials.ts` 选择和组装：消费现有正式 TaskReduction/effective Evidence、独立 Review 绑定和工具原文，Dispatch 签发精确 Run 授权后读取。固定选择的 canonical/来源/撤权复核与已有 delivery 复核组合，不新增归约 owner，不把独立 Review 当 operator-review。完整语义与旧探索兼容边界见 [直接前驱材料](../../interfaces/context-lifecycle.md#普通任务的直接前驱材料2026-09-14ig09)。
+
+Task/Work/Review/Planning/Query/Verification/Architecture/Exploration分别有实际消费者与有界材料接口。源码取材交WorkspaceReader，精确canonical记录由StateLedger提供，正文由Vault校验。编译器只选择/组装/拒绝材料，不执行模型、git验证或Task/Goal归约；真实补料闭环和全部角色消费是否具备另看模块状态。
+
+IG12：Query编译器仅为semantic_query选择固定回应组织版本；完整事实判断与简洁正文分开，选中的记忆仍是preference_only。Runtime只将可信版本对应的静态规则送入实际请求，不解释记忆内容或分类用户语义；见[运行时协作](../../interfaces/runtime-collaboration.md)的IG12边界，真实效果单独验收。
+
+I01功能测试增量：真实语义Query除已接受Plan与TaskReduction，还选取TaskLease指向的实际Run摘要，以及ReadModel公开架构审查视图中属于当前Goal的正式决定/影响集/投递进度；组装层注入该只读消费者。计划声明phase、运行终态、证据归约分别说明，不把缺归约解释成未执行。运行/租约/审查版本随输入固定，后续Query来源资格复核这些版本；无架构读取能力明确unavailable，读取失败返回needs_material，不能据此断言不存在决定。仍受既有bundle容量限制，不读取未授权任意报告正文。
+
+跨 Module 的精确入口与失败/持久兼容规则见 [当前 Module 边界](../../interfaces/module-boundaries.md)。此源码映射不代替整体功能验收。
+
+VR-01 的 `VerificationContextPort.resolveRound` 提供完整 Task/Run/Plan/Goal/Workspace/pins/source 身份，来源 I/O 前后核对 canonical 材料，可按 expected 身份拒绝旧版本；不执行命令或接纳 Evidence。Run 前態未知时保持语义待审，不用 caller 声明或空 changedFiles 快放。准确材料与来源限制见 [Context 交接](../../verification/2026-09-09-core-verification/context-handoff.md)，统一接口语义见上述 Module 边界。
+
+VR-02 已新增 `reviewer-profile.ts`、`reviewer-context.ts` 与 `reviewer-runtime-context.ts`：从原Run持久预算和保存配置metadata形成精确profile，基于canonical Work编制有界包，真实Reviewer身份与完整grant读取原材料，模型/工具消费前后核对当前来源与授权。只豁免本只读Reviewer的prepared/running，其他writer或unknown拒绝。`openReport`用于当前接纳，`openHistoricalReport`单独读取原owner历史报告，不能回流当前资格；准确接口见[独立审阅](../../interfaces/independent-review.md)。本批已按[VR-02验收](../../verification/2026-09-09-independent-review/acceptance.md)确认限定能力，全部角色选材与补料仍未完成。
+
+规划材料的 `PlanningContextPort`、请求、结果与拒绝码统一在 `contracts/planning.ts` 定义，Context 的 `planning-context-compiler.ts` 直接实现；harness 与契约测试直接消费既有编译器对象。仍保留委托 TaskContext 的范围检查、预算、缺口及拒绝映射，未把编译器本身删除或转给组合根。
+
+CM-M06-001：alternative-report-materials.ts供Dispatch在admission前验读可替代报告，核对精确grant投影可见性、正文摘要和当前source。source不可核对时整轮unavailable；精确grant撤销直接refused，其他授权不恢复它。只产观察材料，不决定Wait/任务完成，也不被Control反向调用。 精确语义见[运行时协作](../../interfaces/runtime-collaboration.md)，M06 snap-01 已独立验收，准确边界见模块状态。
+
+
+CM-1B-001（实施中、未冻结验收）：ContextCompiler 每次 Query/Run 输入组装重新读取当前记忆版本和适用来源，按用途选择；WorkContext 可选缺失不能绕过记忆检查。来源/治理版本变动、删除、过期或读取失败均不回退旧缓存。 契约见[记忆维护与回应选材](../../interfaces/memory-maintenance.md)。
+
+
+## CM-1C-001 当前增量（未冻结）
+
+识别 architecture_review 来源版本，仍从 admission 固定 Delivery 集取当前决定正文。材料许可、来源新鲜度与最终模型输入协议保持有效。
+
+涉及本模块文件：`delivery-materials.ts`。共享值与纯校验位于 Contracts 的 architecture-review.ts / architecture-review-values.ts / initial-work-assignment.ts；组合根 service、harness 和 UI 负责接线，不承接模块权威。Gate C 待独立判断。
+
+只读报告的协作佐证：producer-collaboration-facts只消费生产者精确输入绑定Delivery、不可变ArchitectureReviewRecorded(open)事件及当前canonical记录。它分别输出完整有界inputDeliveries、其中实际收到的decisions，以及该Run自己上报的reportedReviews（保留上报时状态与后来current状态）；后来状态不冒充Run输入决定。决定仍复用输入授权守卫并重新捕获来源，并从ArchitectureReview/WorkContextBinding提取Work→Task映射。Verification仅保存该观察到原检查Artifact，不制造决定；ReviewerContext每次currentness重新核对所保存佐证。来源/授予/身份变化不得继续当前使用，历史缺字段不补造。边界见运行时协作Interface的IG14。
+2026-09-15 Q01 复验增量：Query 将已有有界 collaborationWork 的持久 TaskReduction 按执行 DAG 前置任务汇成 prerequisiteAcceptance，分别列出当前计划已记录 satisfied、无归约、旧计划、其他归约状态和未选取任务。依赖去重；空集合不生成就绪结论；currentSourceReadiness 始终为 not_assessed。该表不是新权威，不替代依赖类型满足检查、当前源码验证或 GoalPhase；随实际模型输入计量和语义事实摘要保存。新增输入形状会使旧形状答案的当前适用性保守失效，旧正文与持久指导版本仍可读，不能把旧答案当当前重新验证。
+
+I阶段Query事实引用候选：通过既有QueryExecutionMaterialPort的可选readFact，把已经组装并再次授权的捕获输入位置提供给只读Runtime，不生成新的归约结论。大记录拒绝而不截断，位置缺失与业务缺失分开；精确协议与当前验证边界见[运行时协作](../../interfaces/runtime-collaboration.md#2026-09-15-query-事实引用候选i-阶段尚未独立接纳)。
+
+已发布Query的按需复核材料由readPublishedFacts读取：只接受正式answered的Run/Job及完全一致的持久execution.request；重新读取授权材料与适用记忆，输入摘要必须与原回答一致。它不是任意closed运行的重放授权，也不按当前内容重新解释旧引用。详见[Query语义可靠性](../../interfaces/query-semantic-reliability.md)。

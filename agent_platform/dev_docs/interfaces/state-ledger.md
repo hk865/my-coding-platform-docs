@@ -209,3 +209,51 @@ EventPage fixture，不再维护另一种 EventBatch。fixture 必须包含两�
 ## P1-07 extension record：lease / integration / patch 持久化
 
 2026-09-06 [P1-07](../planning/proposed/P1-foundation/tickets/07-parallel-readers-single-writer.md) 版本化扩展：新增六个 commitKind 与 WorkspaceReadLease / WorkspaceWriteLease / WorkspaceWriteLeaseIndex / IntegrationResult / PatchRecord 聚合；Workspace 聚合 revision 由 ledger CAS 单调推进，patch 登记在同一原子 commit 内携带 N→N+1 推进（显式 release 不推进）。可执行契约见 src/contracts/{workspace-lease,integration,patch,ledger,ledger-validation}.ts。
+
+## CM-1A-001 extension record：协作通信 commit kinds 与聚合
+
+2026-09-13 [CM-1A-001](../planning/active/collaboration-memory/CM-1A-001.md) 第 1 工作段版本化扩展（既有 v1 语义不变）：`LedgerCommit` 增加 14 个 commitKind，`AggregateRef`/`AggregateSnapshot` 增加 10 个协作聚合。**本记录只登记已落地的形状与账本分派：Control handler、Dispatch 路由与 Context 消费者均未实现，业务准入仍在 Control；不代表协作通信已可用，A01–A12 未验证。**
+
+14 个 commitKind（逐项取自 `src/contracts/coordination.ts` 的 `COMMUNICATION_COMMIT_KINDS`，由两个 Adapter 共用的 `validateCommunicationCommit` / `validateCommunicationSuccessorClaimCommit` 校验）：
+
+- `agent-instance-register`：events=[AgentInstanceRegistered]，snapshots=[AgentInstance]（CAS@0，不可变）；
+- `participation-start`：参与关系 @1，**同一事务**可携带发起 Run 的归因（events 含 `WorkRunLinked`，snapshots 含 `WorkContextBinding`）——分两次提交会留下"参与已生效但 Run 未 link"的中间态；
+- `participation-end`：events=[WorkParticipationEnded]，snapshots=[WorkParticipation|WorkMailbox]（CAS@N，历史保留）；
+- `directed-request-send`：events=[DirectedRequestSent, ...DeliveryRecorded]，snapshots=[DirectedRequest|Delivery|CommunicationIntent]（请求 @1 + 首个 route intent，有界时同事务首投）；
+- `directed-request-respond`：events=[DirectedRequestResponded]，snapshots=[DirectedRequest]（回应正文登记，CAS@N）；
+- `directed-request-cancel`：events=[DirectedRequestCancelled]，snapshots=[DirectedRequest]（desired-state 取消）；
+- `subscription-create`：events=[SubscriptionCreated|CommunicationIntentRecorded]，snapshots=[Subscription|CommunicationIntent]（订阅 @1 + 首个 route intent，CAS@0）；
+- `subscription-cancel`：events=[SubscriptionCancelled]，snapshots=[Subscription]（desired-state 取消）；
+- `wait-register`：events=[WaitConditionRegistered|WaitConditionObserved]，snapshots=[WaitCondition|CommunicationIntent]（等待 @1）；
+- `wait-cancel`：events=[WaitConditionCancelled|CommunicationIntentSettled]，snapshots=[WaitCondition|CommunicationIntent]（desired-state 取消）；
+- `communication-intent-claim`：events=[CommunicationIntentClaimed]，snapshots=[CommunicationIntent]（机械领取，事件携带 priorGeneration）；
+- `communication-route-page`：**一页的 Delivery + checkpoint + wait transition + next intent + current settle 同一 CAS**；snapshots=[CommunicationIntent|Delivery|Subscription|WaitCondition]；
+- `communication-intent-settle`：非页面的 settle（cancel 确认 / unknown / quarantine / deadline）；snapshots=[CommunicationIntent|WaitCondition]；
+- `communication-successor-claim`：events=[TaskClaimed, WaitConditionSatisfied, CommunicationAdmissionRecorded, ...CommunicationIntentSettled]，snapshots=[TaskLease, TaskAttempt, Run, DispatchOutboxEntry, WaitCondition, CommunicationAdmission, ...CommunicationIntent]，且 `outboxIntents` **恰好 1 条** `DispatchIntentV1`——后继 TaskAttempt 的唯一调度记录仍是 `DispatchOutboxEntry`。
+
+10 个协作聚合（`AggregateRef`/`AggregateSnapshot`；ref 键 = projectId + workspaceId + 各自局部 id）：
+
+- `AgentInstance`(+agentInstanceId)、`WorkParticipation`(+workId+participationId)、`DirectedRequest`(+requestId)、`Subscription`(+subscriptionId)、`Delivery`(+deliveryId)、`WaitCondition`(+waitId)、`CommunicationIntent`(+intentId)、`CommunicationAdmission`(+waitId)；
+- `CoordinationRegistry` 与 `WorkMailbox` 是**每个 (project, workspace) 一份的可重建投影**（无局部 id），用于查询与重建，不是调度权威。
+
+配套登记（同一工作段）：20 个协作事件进入 `KNOWN_EVENT_TYPES` 与事件校验白名单；两个 ReadModel 的 `isHandledEventType` 白名单同步登记（漏登记会让整页 `ProjectionStallError`）；幂等身份仍是 `commandIdentityKey`，本段把 `agentPrincipal` 折叠进该 key，防止不同 Agent 用同一 idempotencyKey 互相 replay。**注意：tsconfig 未开 `noImplicitReturns`，两个 Adapter 的 commit 分派必须成对核对。** 可执行契约见 `src/contracts/coordination.ts`、`src/contracts/ledger.ts` 与 `src/data/state-ledger/ledger-validation.ts`；本文件不复制可执行 schema。
+
+## CM-1A-001 continuation-04：事务与恢复约束
+
+两套适配器共享形状校验与 canonical 状态 fold。participation-start 先校验通用事件再校验专用顺序/作用域/expectedVersions；active participation 唯一槽与 Work 当前参与关系同事务。waitRef 不携 workId，Work 归属从 canonical Wait 检查。
+
+源事件的 routeIntentPlans.scopeMode=canonical_active 在追加事务内固定 sourceCursor 和当前订阅范围；不会遗漏并发建订阅。null start 固定到 SubscriptionCreated 的真实位置，历史 start 创建一个固定 horizon 的 catchup intent。每页最多扫描 512 源事件；Delivery、checkpoint、wait 条件观察、当前 intent 与下一页同 CAS，页重复/乱序/范围外数据拒绝。取消订阅保留固定页位置并跳过 Delivery。
+
+RuntimeInputBound 原子固定实际输入/manifest/Delivery/grant refs。每个 ModelRequestAuthorized / ModelRequestEvidenceRecorded 用 Run/角色策略/材料引用的 CAS 守卫与 permit @0→@1→@2；新 attempted 不能在取消或终态之后落账。ExecutionEntered 必须 exact owner/generation；ExecutionRetryScheduled 仅撤销未进入授权，同时复原同一个 Run/TaskAttempt/outbox 到待派发并保存退避，已 entered/ended 不可重开。
+
+RunReconciled 是独立的 unknown 终态对账事实。Control 读可信 Host journal；Ledger 检查 exact Run、序号、事件摘要与完整状态 fold。done/cancelled 同事务修正 TaskAttempt 结果；无证明只登记 quarantine。communication-intent-reconcile 仅把未核实的通信结果隔离，保留 generation/owner/domain，不放宽 ordinary settle 的终态守卫。
+
+admitWaitSuccessor 存在 intent 时必须携当前 intentClaim；受理事务 CAS 该 intent、Work binding、参与关系、Wait 及其他新聚合。无 intent 的直接路径也检查该确定性 intent ref @0。新增事件均由两套 ReadModel 识别；ExecutionRetryScheduled/RunReconciled 更新展示，不由投影触发调度。
+
+源码阅读：src/contracts/{coordination,dispatch,execution-authorization,run-lifecycle-fold,run-reconciliation,communication-reconciliation,runtime-input-authorization}.ts → src/data/state-ledger/ledger-validation.ts 的专用校验 → in-memory-ledger.ts / sqlite-ledger.ts。旧字段缺失保持历史可读；新授权不补猜。独立 SQLite 连接与独立进程证据见 tests/coordination/{participation-uniqueness,process-recovery,route-drive}.test.ts。
+
+## CM-1B-001：小记忆能力与笔记治理见证
+
+StateLedger 的可选 memory capability 由现有内存/SQLite 适配器实现，缺失时记忆消费者明确 unavailable；旧 Ledger 调用者可继续不使用该能力。Control 是写入者，ReadModel/Context 只读；collection revision、条目 revision、摘要、来源、适用条件、删除标记与原请求回执由同一记忆事务固定。完整字段与读写/重放/兼容约束见 [记忆维护 Interface](memory-maintenance.md)，不引入第二个存储权威。
+
+ExecutionNote 新增可选 memoryGovernance。提供该见证时，完整正文摘要必须覆盖原始四项治理 revision；记录提交 expectedVersions 恰为 note@0 及四项治理守卫，两个 Ledger 最终 CAS 防止记录前治理变化。没有该字段的旧笔记仍按原规则留作历史，但不允许被导入为本票当前经验；原 governanceRevision 的权限策略语义不变。记忆 collection 提交还复核原 note、当前 Workspace/Goal、治理及后继 note 守卫，省略守卫不能落账。

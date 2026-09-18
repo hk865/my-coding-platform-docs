@@ -1,16 +1,23 @@
 # VerificationEngine Module
 
+> 当前代码与接线评价见 [模块审计](../../../human/module-status.md) 的对应条目。本页保留职责、Interface 要求及明确标注的首切片约定；旧切片状态不能代替当前实现结论。
+
+
 ```yaml
 status: draft
-updated: 2026-09-06
+updated: 2026-09-11
 plane: Control
 ```
 
 ## Purpose
 
+返工重验增量：`rework-verification.ts` 通过 Context 读取正式新承担者及原问题，继承原冻结工具配置并限制到当前 Task，使用既有轮次/检查 journal 完成执行和恢复。必要独立审阅经 prepareReworkReview 进入原 Reviewer 工作；Evidence 和 Task/Goal 归约继续交 Control。普通 Run 不产生检查，旧版本、未受理来源与未知副作用不盲目重跑。契约见[运行时协作](../../interfaces/runtime-collaboration.md#2026-09-11-定向执行反馈增量)。
+
 组合工具与 Reviewer 的证据，返回绑定当前义务及来源的验证结果，不自行完成 Task。
 
 ## Interface
+
+普通只读任务的报告资格检查复用验证轮次、Vault/check journal、EvidenceAdmission 和独立 Reviewer，配置及恢复边界见[普通只读报告验证](../../interfaces/runtime-collaboration.md#2026-09-14-普通只读报告验证ig10)。它只提供机械的报告/来源检查，不能用只读 Run 执行命令，也不自行归约完成。
 
 候选操作：`verify(intent) → verificationRef / incomplete / rejected`。共享字段、拒绝与状态语义唯一来源为 [运行时协作契约](../../interfaces/runtime-collaboration.md)，本页不复制 wire schema。首个消费者：P1-04；12/14 扩展代码图与迁移验证；设计已展开不代表契约已冻结或实现。
 
@@ -33,3 +40,52 @@ ControlEngine、ContextCompiler、ArtifactVault。长期调用关系以 [ModuleD
 ## Context 生命周期与协作扩展
 
 审查绑定明确版本和范围；前次审查可作为来源，新版本重新判断适用性；角色共识不替代有效 Evidence。 行为依据：[Context 生命周期](../../interfaces/context-lifecycle.md)、[运行时协作](../../interfaces/runtime-collaboration.md)、[人类交互](../../interfaces/human-design-status.md)。精确 schema 在对应消费者冻结，文档同步不表示已有实现。
+
+## 历史切片：2026-09-08 实际命令检查消费者
+
+CommandCheckProvider 使用内置 ProcessSandbox 执行明确配置的 static/dynamic 命令。上下文匹配 Project/Goal/Task/Plan/Workspace revision，并绑定工作树内容摘要；前后变化使结果 INCONCLUSIVE。命令退出失败（FAIL）、超时、运行异常、环境失败及缺少副作用确认分开记录。报告保存到 Vault；保存失败不能输出已确认结果。命令通过不是 Reviewer 结论或整体完成。
+
+应用 /api/real/verifications/run-check 接受用户明确授权的命令、类型和单次超时，仅允许已结束且无待对账运行的开发工作区；持有独占工作区租约。它通过实际 VerificationEngine 生成计划并执行该 provider，结果在 Run 的 commandChecks 中持久展示。重复 requestId 不重新执行，参数改变拒绝；重启遇到 running 记录显示 interrupted，不自动重跑。UI 提供运行独立检查入口。当前端口产出 observation 草稿，尚未自动接纳 Evidence／Reviewer／返工状态机。样例宿主的默认测试 provider 仍保留，不代表真实端点使用替身。
+
+
+## 历史增量：2026-09-09 架构归位前的检查中间状态与证据入口
+
+以下保留当时的消费者和恢复证据；日志及生命周期现已迁入 Verification Module，当前归属和 VR-01 接线以下方“当前源码边界”及“通用工具轮次”为准。
+
+探索操作者审阅与外部 benchmark 的检查计划、Evidence 构造与归约请求已归入 `src/control/verification-engine/recorded-verification.ts`；`evidence-admission.ts` 共享接纳证据→Task 归约→Goal 归约的确定顺序。两种入口保留不同检查种类、覆盖资格、原始/诊断/修复语义及旧幂等键；Control 仍决定正式完成。应用保留请求解析、原报告记录和消费者来源预检；命令检查自身的执行/中断/租约对账状态机没有合并到这一流程。独立 Reviewer 与返工尚未因此接通。
+
+应用持久检查日志记录 intent_recorded、lease_acquired、executing、report_stored、result_recorded、lease_released 或 reconciliation_required。执行 checkpoint 落盘失败禁止启动命令；报告 body 落盘与 VerificationResult 登记分开。报告独立保存 effects=not_started/known/unknown，不能用 timeout/stale_source 等结果分类替代副作用状态。未知副作用保留独占租约，重复 requestId 不重跑。
+
+重开后 running 与未确认释放的 finished 都需要对账，check-report 可读取结果登记前已落盘的原报告。reconcile-check 仅消费完整性校验后的报告和 Ledger 租约，known/not_started 方可补交释放；当前源码/计划仍一致才重建观察草稿，不调用 CheckPort。该恢复入口正在复验，独立进程强杀仍待覆盖。
+
+check-evidence 要求精确 reportDigest，重核 Task/Run/Plan/Workspace 与当前内容摘要，先记 pending 再提交原子 Evidence；重试幂等，不直接归约任务或目标。检查中间日志目前属于应用持久文件，租约与 Evidence 属于 StateLedger；Reviewer/返工与全生命周期统一驱动未完成。
+## 当前源码边界（2026-09-11）
+
+Verification 持有检查/审阅 journal 与原始问题材料；canonical 运行产出读取经 VerificationContextPort 的 `runOutputWitness` 取得，load/events 与读取适配归 ContextCompiler，不直接依赖 StateLedger。原失败的当前性、义务承担者及正式 Evidence 是否已重验通过，经 Control 的 ReworkDispositionPort 解释；Verifier 不再用 journal PASS 或本地 Reviewer decision 另算一套处置资格。组合根将读取到的问题材料交 Dispatch，Verification 不成为 Dispatch 的回调依赖。
+
+角色规格 requiredOutputs 是声明性期望，仍如实记录已见证与缺项；它不降低轮次结论、不扣留归约。Plan 中正式 AcceptanceObligation/VerificationRequirement 继续按原验证与归约规则执行。未来记忆产出核对仍在现有 12 Module 内，不能据“记忆模块”新建架构。
+
+`verification-deps.ts` 保存仅模块内部使用的构造依赖；公共生命周期和报告 wire 仍在 `contracts/verification-service.ts`。
+
+`verification-engine.ts` 与 `verification-service.ts` 组织正式检查/候选/证据；命令生命周期、恢复 journal、真实 check provider 与报告读取在 Verification 内部。RecordedVerification 和 ExplorationReportVerifier 分别处理已有结果受理与探索来源资格。Context 只提供材料，GitCandidatePatchCheck 执行补丁检查，原生目录摘要由 WorkspaceReader 提供。MigrationGate 在没有真实检查/Evidence provider 时明确返回 unsupported，版本相等不能证明检查通过。真实应用未配置的通用 Reviewer 验证返回 incomplete。
+
+跨 Module 的精确入口与失败/持久兼容规则见 [当前 Module 边界](../../interfaces/module-boundaries.md)。此源码映射不代替整体功能验收。
+
+## 通用工具轮次（VR-01）
+
+`verification-rounds.ts` 持有明确 Task/Run 的不可变检查配置、完整来源身份、唯一子检查及覆盖集合。正式 VerificationPort 带显式 round 执行范围时委托同一流程，缺范围不猜最新 Run；HTTP 与工作台使用相同服务。全部适用工具各执行一次，复用既有命令执行、租约与报告日志；每个 VR 聚合覆盖该 VR 的全部适用工具结果后才请求 Control 接纳，保留 FAIL 优先及独立 Reviewer 缺项。无对应 VR 的额外适用工具失败仍影响轮次结论，但不伪造正式覆盖。独立审阅由下述 Reviewer 流程承担，工具轮次不替代 Reviewer 资格。
+
+同键重放不执行、未知效果先对账、显式恢复只继续未执行项；旧单命令请求和原始报告继续可读。配置、材料、失败及恢复语义见[当前Module边界](../../interfaces/module-boundaries.md)，测试与剩余义务见[VR-01](../../planning/active/core-verification/VR-01.md)。固定快照全仓239文件/1561项、浏览器21项及类型/构建通过；恢复后最终全量日志与源码身份已独立确认并验收，不把工具轮次通过当作整个产品完成。
+
+## 独立审阅（VR-02）
+
+DEF-17增量：已知启动前失败由`recoverReview`持久记录独立授权、冻结替代命令和回执，接回同一结果资格与归约链。资格读取归Context，原子替代归受限Control端口，HTTP/UI仅提交显式授权并读取解释；详细规则唯一来源为[独立审阅Interface的DEF-17节](../../interfaces/independent-review.md#已知启动前失败的产品恢复def-17)，验收见该票。
+
+`reviewer-verification.ts` 在同一 VerificationService 提供六个实际审阅方法（含 DEF-17 recoverReview），`reviewer-report.ts` 验证逐VR覆盖、原工具报告、引用与结论资格，`reviewer-record.ts` 保存请求/采用协议后的归约/原报告assessment/正式接纳/结果后归约 checkpoint。模型执行交给 Dispatch；本模块只消费 canonical Work.output 原报告，临时缺料、永久格式拒绝和合法FAIL/INCONCLUSIVE各自保存。失败不能用新请求重抽清除，Task结果不复制到GoalGate。准确协议与历史读取边界见[独立审阅](../../interfaces/independent-review.md)，原限定能力见[VR-02验收](../../verification/2026-09-09-independent-review/acceptance.md)，恢复增量见[DEF-17验收](../../verification/2026-09-10-def17/acceptance.md)；授权内返工的提案、受理及派发已有消费者，正式返工已接当前版本工具重验及必要 Reviewer 准备，并已证明单任务工具重验至 Task 归约；同一任务的必要重审联合链、连续失败和中途恢复仍待完整验收。
+
+
+## 普通 GoalGate 独立取证（CM-I01-GATE-001）
+
+普通 GoalGate 通过现有 startRound/startReview 进入同一持久工具与 Reviewer 生命周期，显式 scope.gateSubject='goal' 区分 Gate subject 与真实普通 Producer Run。Verification 在首次轮次固定前请求 Control 刷新前置 Task 归约，Context 提供前置身份与来源；Gate 自己编译义务、重新执行检查、保存报告并请求接纳，不复制 Task PASS，也不伪造 Gate Worker Run。Reviewer 的 Producer Attempt 保留原 Task 身份，独立 Reviewer 的 subject/Attempt 属于 Gate。前置变更、当前来源变化、取消和未知副作用仍阻断；Scope/回执及精确边界见[独立审阅 Interface 的 GoalGate 增量](../../interfaces/independent-review.md#普通-goalgate-独立取证增量cm-i01-gate-001)。测试只提供本次限定工程证据，正式集成和独立验收尚由 I01–I04 承担。
+
+2026-09-15 queryFacts 只读观察轮次、Reviewer 实际执行/正式接纳与当前来源适用性；不启动或重做验证。并发 journal 变化不混合为成功结果。契约见 [Query 语义可靠性](../../interfaces/query-semantic-reliability.md)，当前定向证据不代表 I01–I04 接纳。
