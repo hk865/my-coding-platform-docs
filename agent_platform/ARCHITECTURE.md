@@ -8,6 +8,8 @@ scope: Plane、Module registry、长期依赖与全局不变量
 
 本文是低分辨率地图。Module 内部机制、字段和状态转换只存在于对应 Module 或 Interface 文档。
 
+后续设计讨论（2026-09-18）：[Agent 生命周期、Session 复用与 ContextCompiler 职责收敛](dev_docs/design/2026-09-18-agent-lifecycle-session-reuse.md)，关联[性能诊断](dev_docs/design/2026-09-18-performance-diagnosis.md)。这是用户提出的后续方向与待验证方案，不代表已经改变 Module 边界或完成实现。
+
 当前源码入口、行为归属与持久兼容边界见 [Module 边界](dev_docs/interfaces/module-boundaries.md)。本轮保留 12 Module，梳理现有实现及生产调用方；该文档与结构检查不代表完整自治产品已完成。
 
 当前实现另见 [12 Module 当前状态](human/module-status.md)。本页的模块关系表达设计职责，不能据 `planned/draft` 或旧切片说明推断当前无代码，也不能据已有 Interface 推断真实链路已完成；设计与实际依赖差异见该页工程审计。
